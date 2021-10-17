@@ -1,0 +1,14 @@
+[package]
+name = "rust_solutions"
+version = "0.1.0"
+authors = ["donRumata <donrumata03@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "A"
+path = "src/A.rs"
+
+
+[dependencies]
