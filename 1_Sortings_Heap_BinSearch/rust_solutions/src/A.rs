@@ -8,7 +8,7 @@ fn merge(l: Vec<i64>, r: Vec<i64>) -> Vec<i64> {
     let mut j = i;
 
     while i + j < l.len() + r.len() {
-        if i != l.len() && (j == r.len() || l[i] < r[j]) {
+        if i != l.len() && (j == r.len() || l[i] <= r[j]) {
             res.push(l[i]);
             i += 1;
         }
@@ -21,7 +21,7 @@ fn merge(l: Vec<i64>, r: Vec<i64>) -> Vec<i64> {
     return res;
 }
 
-fn sorted(v: Vec<i64>) -> Vec<i64> {
+fn merge_sorted(v: Vec<i64>) -> Vec<i64> {
     let n = v.len();
     if n <= 1 {
         return v;
@@ -29,8 +29,8 @@ fn sorted(v: Vec<i64>) -> Vec<i64> {
 
     let m = n / 2;
 
-    let sorted_l = sorted((&v[..m]).to_vec());
-    let sorted_r = sorted((&v[m..]).to_vec());
+    let sorted_l = merge_sorted((&v[..m]).to_vec());
+    let sorted_r = merge_sorted((&v[m..]).to_vec());
 
     merge(sorted_l, sorted_r)
 }
@@ -80,7 +80,7 @@ fn main() {
         data.push(scanner.token());
     }
 
-    let sorted = sorted(data);
+    let sorted = merge_sorted(data);
     let string_vec: Vec<String> = sorted.iter().map(|int| int.to_string()).collect();
     let output_string = string_vec.join(" ");
 
