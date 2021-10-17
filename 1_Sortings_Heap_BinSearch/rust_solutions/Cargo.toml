@@ -11,4 +11,9 @@ name = "A"
 path = "src/A.rs"
 
 
+[[bin]]
+name = "scanner_test"
+path = "src/scanner_test.rs"
+
+
 [dependencies]
