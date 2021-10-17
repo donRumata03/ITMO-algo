@@ -5,15 +5,18 @@ use std::str;
 use std::io::BufReader;
 
 
-fn merge(l: Vec<i64>, r: Vec<i64>) -> Vec<i64> {
+fn merge_with_inversions(l: Vec<i64>, r: Vec<i64>) -> (Vec<i64>, i64) {
 	let mut res = Vec::with_capacity(l.len() + r.len());
 	let mut i = 0 as usize;
 	let mut j = i;
+
+	let mut inversions: i64 = 0;
 
 	while i + j < l.len() + r.len() {
 		if i != l.len() && (j == r.len() || l[i] <= r[j]) {
 			res.push(l[i]);
 			i += 1;
+			inversions += j as i64;
 		}
 		else {
 			res.push(r[j]);
@@ -21,7 +24,7 @@ fn merge(l: Vec<i64>, r: Vec<i64>) -> Vec<i64> {
 		}
 	}
 
-	return res;
+	(res, inversions)
 }
 
 fn inversions_by_merge_sort(v: Vec<i64>) -> (i64, Vec<i64>) {
@@ -35,7 +38,9 @@ fn inversions_by_merge_sort(v: Vec<i64>) -> (i64, Vec<i64>) {
 	let (inv_l, sorted_l) = inversions_by_merge_sort((&v[..m]).to_vec());
 	let (inv_r, sorted_r) = inversions_by_merge_sort((&v[m..]).to_vec());
 
-	(inv_l + inv_r, merge(sorted_l, sorted_r))
+	let (sorted, lr_inversions) = merge_with_inversions(sorted_l, sorted_r);
+
+	(inv_l + lr_inversions + inv_r, sorted)
 }
 
 
@@ -83,7 +88,7 @@ fn main() {
 		data.push(scanner.token());
 	}
 
-	let inversion = inversions_by_merge_sort(data);
+	let (inversions, sorted) = inversions_by_merge_sort(data);
 
 	println!("{}", inversions);
 }
