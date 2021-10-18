@@ -41,8 +41,6 @@ impl<R: io::BufRead> Scanner<R> {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-
 fn discrete_bin_search<Pred>(mut predicate: Pred, L: isize, R: isize) -> isize
 	where Pred: FnMut(isize) -> bool
 {

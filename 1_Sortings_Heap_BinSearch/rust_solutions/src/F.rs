@@ -1,3 +1,4 @@
+// #![feature(cmp_min_max_by)]
 use std::cmp::{max, min};
 use std::iter::Filter;
 use std::slice::Iter;
@@ -41,8 +42,6 @@ impl<R: io::BufRead> Scanner<R> {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-
 fn discrete_bin_search<Pred>(mut predicate: Pred, L: isize, R: isize) -> isize
 	where Pred: FnMut(isize) -> bool
 {
@@ -63,6 +62,33 @@ fn discrete_bin_search<Pred>(mut predicate: Pred, L: isize, R: isize) -> isize
 }
 
 
-fn main() {
+fn find_closest(ms: &Vec<i64>, query: i64) -> i64 {
+	let min_geq_index = discrete_bin_search(|index| ms[index as usize] >= query, -1, ms.len() as isize) as i64;
 
+	ms[
+		*[min_geq_index - 1, min_geq_index].iter()
+			.filter(|&&e| 0 <= e && e < ms.len() as i64)
+			.min_by_key(|&&index| (ms[index as usize] - query).abs()).unwrap() as usize
+	]
+}
+
+fn main() {
+	let mut scanner = Scanner::new(BufReader::new(io::stdin()));
+
+	let n: usize = scanner.token();
+	let k: usize = scanner.token();
+
+	let mut ms = Vec::new();
+	for i in 0..n {
+		ms.push(scanner.token());
+	}
+
+	let mut queries = Vec::new();
+	for i in 0..k {
+		queries.push(scanner.token::<i64>());
+	}
+
+	for q in queries {
+		println!("{}", find_closest(&ms, q));
+	}
 }
