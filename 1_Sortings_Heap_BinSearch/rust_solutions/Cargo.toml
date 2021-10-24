@@ -58,6 +58,10 @@ path = "src/J.rs"
 name = "K"
 path = "src/K.rs"
 
+[[bin]]
+name = "L"
+path = "src/L.rs"
+
 
 
 
