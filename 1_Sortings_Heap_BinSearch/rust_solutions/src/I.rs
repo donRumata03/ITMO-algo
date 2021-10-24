@@ -22,7 +22,7 @@ impl<R: io::BufRead> Scanner<R> {
 		}
 	}
 
-	/// Use "turbofish" syntax token::<T>() to select data type of next token.
+	/// Use "turbofish" syntax `token::<T>()` to select data type of next token.
 	///
 	/// # Panics
 	///
