@@ -67,6 +67,31 @@ fn discrete_bin_search<Pred>(mut predicate: Pred, L: i64, R: i64) -> (i64, i64)
 
 ///     //////////////////////////////////////////////////////////////////////////////////////////
 
+struct CompressedArray<T> {
+	data: Vec<(T, usize)>
+}
+
+impl<T> CompressedArray<T> {
+	fn new(mut ms: Vec<T>) -> CompressedArray<T> {
+		let mut res_data = Vec::new();
+
+		ms.sort();
+		for v in ms {
+			if res_data.is_empty() || res_data.last().unwrap() != v {
+				res_data.push((v, 1));
+			} else {
+				*res_data.last().as_mut().unwrap().1 += 1;
+			}
+		}
+
+		CompressedArray {
+			data: res_data
+		}
+	}
+}
+
+///     //////////////////////////////////////////////////////////////////////////////////////////
+
 fn get_border_in_table<P, G>(increasing_predicate: P, n: u64, v_gen: G) -> Vec<u64>
 	where P: Fn(u64) -> bool, G: Fn(u64, u64) -> u64
 {
@@ -159,13 +184,12 @@ fn main() {
 	for _ in 0..n {
 		b.push(scanner.token());
 	}
-	a.sort();
-	b.sort();
-
+	let c_a = CompressedArray::new(a);
+	let c_b = CompressedArray::new(b);
 
 	// println!("{}", first_index_of_cell_in_table(2, n, mt_by_ind));
 
 	// println!("{:?}", get_border_in_table(|v| v > 20, 7, mt_by_ind));
 
-	println!("{}", kth_sum(k - 1, n, a, b));
+	println!("{}", kth_sum(k - 1, n, c_a, c_b));
 }
