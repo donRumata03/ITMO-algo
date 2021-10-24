@@ -94,7 +94,7 @@ fn largest_set_for_c(c: f64, jewelery: &Vec<Jewel>, fixed_k: Option<usize>) -> V
 	let mut cur_sum = 0.;
 
 	let res = match fixed_k {
-		None => js.iter().take_while(| &j | { cur_sum += jewel_cost(j); cur_sum >= 0. }).cloned().collect(),
+		None => js.into_iter().take_while(| j | { cur_sum += jewel_cost(j); cur_sum >= 0. }).collect(),
 		Some(k) => js.iter().take(k).cloned().collect()
 	};
 

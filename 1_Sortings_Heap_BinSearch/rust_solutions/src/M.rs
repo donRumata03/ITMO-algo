@@ -67,20 +67,21 @@ fn discrete_bin_search<Pred>(mut predicate: Pred, L: i64, R: i64) -> (i64, i64)
 
 ///     //////////////////////////////////////////////////////////////////////////////////////////
 
-struct CompressedArray<T> {
+struct CompressedArray<T: Ord> {
 	data: Vec<(T, usize)>
 }
 
-impl<T> CompressedArray<T> {
+impl<T: Ord> CompressedArray<T> {
 	fn new(mut ms: Vec<T>) -> CompressedArray<T> {
-		let mut res_data = Vec::new();
+		let mut res_data: Vec<(T, usize)> = Vec::new();
 
 		ms.sort();
 		for v in ms {
-			if res_data.is_empty() || res_data.last().unwrap() != v {
+			if res_data.is_empty() || res_data.last().unwrap().0 != v {
 				res_data.push((v, 1));
 			} else {
-				*res_data.last().as_mut().unwrap().1 += 1;
+				let (ref mut val, ref mut count) = res_data.last().as_mut().unwrap();
+				count.1 += 1;
 			}
 		}
 
