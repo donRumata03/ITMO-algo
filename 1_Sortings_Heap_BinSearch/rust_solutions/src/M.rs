@@ -7,6 +7,7 @@ use std::slice::Iter;
 use std::io;
 use std::str;
 use std::io::BufReader;
+use std::collections::HashMap;
 // use core::panicking::panic_fmt;
 
 
@@ -114,16 +115,28 @@ fn kth_sum(index: u64, n: u64, a: Vec<u64>, b: Vec<u64>) -> u64 {
 	let lower_bound = get_border_in_table(|p| p >= mt_by_ind(lp as u64, lp as u64), n, mt_by_ind);
 	let upper_bound = get_border_in_table(|p| p > mt_by_ind(rp as u64, rp as u64), n, mt_by_ind);
 
-	let mut numbers_considered = Vec::new();
+	let mut numbers_considered = HashMap::new();
 	for x in 0..n {
 		for y in lower_bound[x as usize]..upper_bound[x as usize] {
-			numbers_considered.push(mt_by_ind(x, y));
+			*numbers_considered.entry(mt_by_ind(x, y)).or_insert(0usize) += 1;
 		}
 	}
-	numbers_considered.sort();
-	let first_ind = first_index_of_cell_in_table(numbers_considered[0], n, mt_by_ind);
+	let mut num_pairs: Vec<(u64, usize)> = numbers_considered.into_iter().collect();
+	num_pairs.sort_by_key(|v| v.0);
+	let first_ind = first_index_of_cell_in_table(num_pairs[0].0, n, mt_by_ind);
 
-	return numbers_considered[(index - first_ind) as usize];
+	// return numbers_considered[(index - first_ind) as usize];
+
+	let ind_required = (index - first_ind) as usize;
+	let mut ind_before = 0;
+	for (num, count) in num_pairs {
+		// num's range is: [ind_before, ind_before + count)
+		if ind_required < ind_before + count { return num; }
+
+		ind_before += count;
+	}
+	panic!();
+
 	// match numbers_considered.get((index - first_ind) as usize) {
 	// 	None => { loop {} }
 	// 	Some(&v) => v
