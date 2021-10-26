@@ -80,8 +80,8 @@ impl<T: Ord> CompressedArray<T> {
 			if res_data.is_empty() || res_data.last().unwrap().0 != v {
 				res_data.push((v, 1));
 			} else {
-				let (ref mut val, ref mut count) = res_data.last().as_mut().unwrap();
-				count.1 += 1;
+				let (ref mut val, ref mut count) = res_data.last_mut().unwrap();
+				*count += 1;
 			}
 		}
 
@@ -113,13 +113,19 @@ fn get_border_in_table<P, G>(increasing_predicate: P, n: u64, v_gen: G) -> Vec<u
 fn first_index_of_cell_in_table<G>(v: u64, n: u64, v_gen: G) -> u64
 	where G: Fn(u64, u64) -> u64
 {
-	// let v = v_gen(i, j);
-	// There are v - 1 numbers guaranteed to be smaller than v and probably — some other ones
-
 	let border = get_border_in_table(|vr| vr >= v, n, v_gen);
-	// println!("{:?}", border);
+	// println!("First index of {} is {} (border: {:?})", v, border.iter().sum::<u64>(), border);
 
 	border.iter().sum()
+}
+
+fn last_index_of_cell_in_table<G>(v: u64, n: u64, v_gen: G) -> u64
+	where G: Fn(u64, u64) -> u64
+{
+	let border = get_border_in_table(|vr| vr > v, n, v_gen);
+	// println!("Last index of {} is {} (border: {:?})", v, border.iter().sum::<u64>() - 1u64, border);
+
+	border.iter().sum::<u64>() - 1
 }
 
 fn kth_sum(index: u64, n: u64, a: Vec<u64>, b: Vec<u64>) -> u64 {
@@ -170,6 +176,30 @@ fn kth_sum(index: u64, n: u64, a: Vec<u64>, b: Vec<u64>) -> u64 {
 	// panic!();
 }
 
+fn optimized_kth_sum(index: u64, n: u64, a: Vec<u64>, b: Vec<u64>) -> u64 {
+	let mt_by_ind = |i: u64, j: u64| {
+		a[i as usize] + b[j as usize]
+	};
+
+	// Look for an appropriate col:
+	let appropriate_col = discrete_bin_search(|col| {
+		index <= last_index_of_cell_in_table(mt_by_ind(col as u64, n - 1), n, mt_by_ind)
+	}, -1, n as i64).1;
+	println!("Column: {}", appropriate_col);
+
+	let appropriate_row = discrete_bin_search(|row| {
+		index <= last_index_of_cell_in_table(mt_by_ind(appropriate_col as u64, row as u64), n, mt_by_ind)
+	}, -1, n as i64).1;
+	println!("Row: {}", appropriate_row);
+
+	return mt_by_ind(appropriate_col as u64, appropriate_row as u64);
+}
+
+fn print_last_index_of(val: usize) {
+	let all_values = vec![3, 5, 5, 5, 7, 7, 7, 7, 9, 9, 9, 9, 9, 11, 11, 11, 11, 11, 13, 13, 13, 13, 15, 15, 17];
+	println!("Last index of {} is: {:#?}", val, all_values.iter().rposition(|&v| v == val).unwrap());
+}
+
 fn main() {
 	let mut scanner = Scanner::new(BufReader::new(io::stdin()));
 
@@ -185,12 +215,34 @@ fn main() {
 	for _ in 0..n {
 		b.push(scanner.token());
 	}
-	let c_a = CompressedArray::new(a);
-	let c_b = CompressedArray::new(b);
+	a.sort();
+	b.sort();
+
+	// let c_a = CompressedArray::new(a);
+	// let c_b = CompressedArray::new(b);
 
 	// println!("{}", first_index_of_cell_in_table(2, n, mt_by_ind));
 
 	// println!("{:?}", get_border_in_table(|v| v > 20, 7, mt_by_ind));
 
-	println!("{}", kth_sum(k - 1, n, c_a, c_b));
+	// println!("{}", kth_sum(k - 1, n, a, b));
+	println!("{}", optimized_kth_sum(k - 1, n, a, b));
+
+	// println!("_____________test");
+	// print_last_index_of(9);
+	// print_last_index_of(11);
+	// print_last_index_of(13);
+	// print_last_index_of(15);
+	// print_last_index_of(17);
 }
+
+/*
+5 25
+4 2 6 4 8
+7 3 1 9 5
+
+
+3 5
+1 1 1
+1 1 1
+*/
