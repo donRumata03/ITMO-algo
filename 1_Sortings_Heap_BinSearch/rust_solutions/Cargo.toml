@@ -71,3 +71,4 @@ path = "src/M.rs"
 
 [dependencies]
 num = "0.4"
+rand = "0.8.4"

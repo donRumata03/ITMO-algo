@@ -8,6 +8,7 @@ use std::io;
 use std::str;
 use std::io::BufReader;
 use std::collections::HashMap;
+use rand::Rng;
 // use core::panicking::panic_fmt;
 
 
@@ -123,12 +124,15 @@ fn last_index_of_cell_in_table<G>(v: u64, n: u64, v_gen: G) -> u64
 	where G: Fn(u64, u64) -> u64
 {
 	let border = get_border_in_table(|vr| vr > v, n, v_gen);
-	// println!("Last index of {} is {} (border: {:?})", v, border.iter().sum::<u64>() - 1u64, border);
+	println!("Last index of {} is {} (border: {:?})", v, border.iter().sum::<u64>() - 1u64, border);
 
 	border.iter().sum::<u64>() - 1
 }
 
-fn kth_sum(index: u64, n: u64, a: Vec<u64>, b: Vec<u64>) -> u64 {
+fn kth_sum(index: u64, n: u64, mut a: Vec<u64>, mut b: Vec<u64>) -> u64 {
+	a.sort();
+	b.sort();
+
 	let mt_by_ind = |i: u64, j: u64| {
 		// if i == n || j == n {panic!();}
 		if i as usize >= a.len() || j as usize >= b.len() {loop{}};
@@ -176,10 +180,14 @@ fn kth_sum(index: u64, n: u64, a: Vec<u64>, b: Vec<u64>) -> u64 {
 	// panic!();
 }
 
-fn optimized_kth_sum(index: u64, n: u64, a: Vec<u64>, b: Vec<u64>) -> u64 {
+fn optimized_kth_sum(index: u64, n: u64, mut a: Vec<u64>, mut b: Vec<u64>) -> u64 {
+	a.sort();
+	b.sort();
+
 	let mt_by_ind = |i: u64, j: u64| {
 		a[i as usize] + b[j as usize]
 	};
+
 
 	// Look for an appropriate col:
 	let appropriate_col = discrete_bin_search(|col| {
@@ -197,10 +205,44 @@ fn optimized_kth_sum(index: u64, n: u64, a: Vec<u64>, b: Vec<u64>) -> u64 {
 
 fn print_last_index_of(val: usize) {
 	let all_values = vec![3, 5, 5, 5, 7, 7, 7, 7, 9, 9, 9, 9, 9, 11, 11, 11, 11, 11, 13, 13, 13, 13, 15, 15, 17];
-	println!("Last index of {} is: {:#?}", val, all_values.iter().rposition(|&v| v == val).unwrap());
+	// println!("Last index of {} is: {:#?}", val, all_values.iter().rposition(|&v| v == val).unwrap());
 }
 
+fn stress_test(n: usize) {
+	let mut rng = rand::thread_rng();
+	let mut rng2 = rand::thread_rng();
+
+	let mut gen = || (0..n).map(|_| rng.gen_range(0..10u64)).collect::<Vec<_>>();
+
+	loop {
+		let a = gen();
+		let b = gen();
+
+		let index = rng2.gen_range(0..n.pow(2));
+		let true_answer = kth_sum(index as u64, n as u64, a.clone(), b.clone());
+		let candidate_answer = optimized_kth_sum(index as u64, n as u64, a.clone(), b.clone());
+
+		if candidate_answer != true_answer {
+			println!("False answer found!");
+			println!("n was: {}", n);
+			println!("a was: {:?}", a);
+			println!("b was: {:?}", b);
+			println!("Index (0-based) was: {} ({} for 1-based)", index, index + 1);
+
+			println!("True answer: {}", true_answer);
+			println!("Optimized answer: {}", candidate_answer);
+
+			return;
+		}
+	}
+}
+
+
+
 fn main() {
+	// stress_test(2);
+	// return;
+
 	let mut scanner = Scanner::new(BufReader::new(io::stdin()));
 
 	let n: u64 = scanner.token();
@@ -215,8 +257,6 @@ fn main() {
 	for _ in 0..n {
 		b.push(scanner.token());
 	}
-	a.sort();
-	b.sort();
 
 	// let c_a = CompressedArray::new(a);
 	// let c_b = CompressedArray::new(b);
@@ -225,8 +265,9 @@ fn main() {
 
 	// println!("{:?}", get_border_in_table(|v| v > 20, 7, mt_by_ind));
 
-	// println!("{}", kth_sum(k - 1, n, a, b));
-	println!("{}", optimized_kth_sum(k - 1, n, a, b));
+
+	println!("{}", optimized_kth_sum(k - 1, n, a.clone(), b.clone()));
+	println!("{}", kth_sum(k - 1, n, a.clone(), b.clone()));
 
 	// println!("_____________test");
 	// print_last_index_of(9);
@@ -245,4 +286,17 @@ fn main() {
 3 5
 1 1 1
 1 1 1
+
+
+False answer found!
+n was: 2
+a was: [5, 7]
+b was: [0, 9]
+Index (0-based) was: 1 (2 for 1-based)
+True answer: 7
+Optimized answer: 14
+2 2
+5 7
+0 9
+
 */
