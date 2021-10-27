@@ -11,7 +11,7 @@ use std::io;
 use std::str;
 use std::io::BufReader;
 use std::collections::HashMap;
-use rand::Rng;
+// use rand::Rng;
 // use core::panicking::panic_fmt;
 
 
@@ -228,35 +228,35 @@ fn print_last_index_of(val: usize) {
 	// println!("Last index of {} is: {:#?}", val, all_values.iter().rposition(|&v| v == val).unwrap());
 }
 
-#[deprecated]
-fn stress_test(n: usize) {
-	let mut rng = rand::thread_rng();
-	let mut rng2 = rand::thread_rng();
-
-	let mut gen = || (0..n).map(|_| rng.gen_range(0..10u64)).collect::<Vec<_>>();
-
-	loop {
-		let a = gen();
-		let b = gen();
-
-		let index = rng2.gen_range(0..n.pow(2));
-		let true_answer = kth_sum(index as u64, n as u64, a.clone(), b.clone());
-		let candidate_answer = optimized_kth_sum(index as u64, n as u64, a.clone(), b.clone());
-
-		if candidate_answer != true_answer {
-			println!("False answer found!");
-			println!("n was: {}", n);
-			println!("a was: {:?}", a);
-			println!("b was: {:?}", b);
-			println!("Index (0-based) was: {} ({} for 1-based)", index, index + 1);
-
-			println!("True answer: {}", true_answer);
-			println!("Optimized answer: {}", candidate_answer);
-
-			return;
-		}
-	}
-}
+// #[deprecated]
+// fn stress_test(n: usize) {
+// 	let mut rng = rand::thread_rng();
+// 	let mut rng2 = rand::thread_rng();
+//
+// 	let mut gen = || (0..n).map(|_| rng.gen_range(0..10u64)).collect::<Vec<_>>();
+//
+// 	loop {
+// 		let a = gen();
+// 		let b = gen();
+//
+// 		let index = rng2.gen_range(0..n.pow(2));
+// 		let true_answer = kth_sum(index as u64, n as u64, a.clone(), b.clone());
+// 		let candidate_answer = optimized_kth_sum(index as u64, n as u64, a.clone(), b.clone());
+//
+// 		if candidate_answer != true_answer {
+// 			println!("False answer found!");
+// 			println!("n was: {}", n);
+// 			println!("a was: {:?}", a);
+// 			println!("b was: {:?}", b);
+// 			println!("Index (0-based) was: {} ({} for 1-based)", index, index + 1);
+//
+// 			println!("True answer: {}", true_answer);
+// 			println!("Optimized answer: {}", candidate_answer);
+//
+// 			return;
+// 		}
+// 	}
+// }
 
 
 
