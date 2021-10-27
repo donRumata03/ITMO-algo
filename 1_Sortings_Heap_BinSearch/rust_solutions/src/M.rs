@@ -1,5 +1,8 @@
 // H. K-th sum
 
+// #![deny(deprecated)]
+
+
 // #![feature(cmp_min_max_by)]
 use std::cmp::{max, min};
 use std::iter::Filter;
@@ -124,7 +127,7 @@ fn last_index_of_cell_in_table<G>(v: u64, n: u64, v_gen: G) -> u64
 	where G: Fn(u64, u64) -> u64
 {
 	let border = get_border_in_table(|vr| vr > v, n, v_gen);
-	println!("Last index of {} is {} (border: {:?})", v, border.iter().sum::<u64>() - 1u64, border);
+	// println!("Last index of {} is {} (border: {:?})", v, border.iter().sum::<u64>() - 1u64, border);
 
 	border.iter().sum::<u64>() - 1
 }
@@ -180,6 +183,7 @@ fn kth_sum(index: u64, n: u64, mut a: Vec<u64>, mut b: Vec<u64>) -> u64 {
 	// panic!();
 }
 
+#[deprecated]
 fn optimized_kth_sum(index: u64, n: u64, mut a: Vec<u64>, mut b: Vec<u64>) -> u64 {
 	a.sort();
 	b.sort();
@@ -202,12 +206,29 @@ fn optimized_kth_sum(index: u64, n: u64, mut a: Vec<u64>, mut b: Vec<u64>) -> u6
 
 	return mt_by_ind(appropriate_col as u64, appropriate_row as u64);
 }
+fn extremely_optimized_kth_sum(index: u64, n: u64, mut a: Vec<u64>, mut b: Vec<u64>) -> u64 {
+	a.sort();
+	b.sort();
+
+	let mt_by_ind = |i: u64, j: u64| {
+		a[i as usize] + b[j as usize]
+	};
+
+
+	// Look for an appropriate col:
+	let answer = discrete_bin_search(|val| {
+		index <= last_index_of_cell_in_table(val as u64, n, mt_by_ind)
+	}, (mt_by_ind(0, 0)) as i64 - 1, (mt_by_ind(n - 1, n - 1) + 1) as i64).1;
+
+	answer as u64
+}
 
 fn print_last_index_of(val: usize) {
 	let all_values = vec![3, 5, 5, 5, 7, 7, 7, 7, 9, 9, 9, 9, 9, 11, 11, 11, 11, 11, 13, 13, 13, 13, 15, 15, 17];
 	// println!("Last index of {} is: {:#?}", val, all_values.iter().rposition(|&v| v == val).unwrap());
 }
 
+#[deprecated]
 fn stress_test(n: usize) {
 	let mut rng = rand::thread_rng();
 	let mut rng2 = rand::thread_rng();
@@ -266,8 +287,9 @@ fn main() {
 	// println!("{:?}", get_border_in_table(|v| v > 20, 7, mt_by_ind));
 
 
-	println!("{}", optimized_kth_sum(k - 1, n, a.clone(), b.clone()));
-	println!("{}", kth_sum(k - 1, n, a.clone(), b.clone()));
+	// println!("{}", optimized_kth_sum(k - 1, n, a.clone(), b.clone()));
+	println!("{}", extremely_optimized_kth_sum(k - 1, n, a.clone(), b.clone()));
+	// println!("{}", kth_sum(k - 1, n, a.clone(), b.clone()));
 
 	// println!("_____________test");
 	// print_last_index_of(9);
