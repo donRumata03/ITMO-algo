@@ -23,6 +23,13 @@ name = "D"
 path = "src/D.rs"
 
 
+
+
+[[bin]]
+name = "F"
+path = "src/F.rs"
+
+
 [dependencies]
 
 derive_more = "0.6.0"
