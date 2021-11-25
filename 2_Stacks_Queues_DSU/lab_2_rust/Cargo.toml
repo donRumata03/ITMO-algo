@@ -34,6 +34,10 @@ path = "src/F.rs"
 name = "G"
 path = "src/G.rs"
 
+[[bin]]
+name = "H"
+path = "src/H.rs"
+
 
 [dependencies]
 
