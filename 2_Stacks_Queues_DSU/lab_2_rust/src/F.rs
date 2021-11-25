@@ -1,3 +1,5 @@
+// #[macro_use]
+// extern crate derive_more;
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
@@ -15,13 +17,10 @@ use {
 		str,
 		cmp::min,
 		iter::once,
-		fs::{File, OpenOptions},
+		fs::{File, OpenOptions}
 	}
 };
-use std::ptr::{null, null_mut};
-use std::alloc::{System, Layout, GlobalAlloc};
-use std::collections::LinkedList;
-
+use std::collections::HashMap;
 
 /// Writer
 pub struct OutputWriter<W: Write> {
@@ -250,28 +249,62 @@ impl_readable_from!{ i64, [i32, i16, i8, isize] }
 impl_readable_from!{ f64, [f32] }
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+enum Operation {
+	Push,
+	Pop
+}
 
 fn main() {
+	// let mut scanner = Scanner::new(BufReader::new(io::stdin()));
+
 	let mut input = InputReader::new();
-	// let mut output = OutputWriter::new();
+	let mut output = OutputWriter::new();
 
 	let n: usize = input.next();
-	let mut vec = Vec::new();
+
+	let mut data = Vec::new();
 
 	for _ in 0..n {
-		vec.push(input.next::<isize>());
+		data.push(input.next::<i64>());
 	}
 
-	vec.sort();
+	let mut unique_sorted_data = data.clone();
+	unique_sorted_data.sort();
+	unique_sorted_data.dedup();
+	assert_eq!(unique_sorted_data.len(), data.len());
 
-	if vec.iter().any(|&v| v < 0) {
-		loop {
+	let mut index_in_unique_sorted = HashMap::new();
+	for (index, num) in unique_sorted_data.iter().enumerate() {
+		index_in_unique_sorted.insert(num, index);
+	}
 
+	// Actual process:
+	let mut operations = Vec::new();
+
+	let mut last_index_in_sorted_prefix = None;
+	let mut working_stack = Vec::new();
+	for value in data.iter() {
+		operations.push(Operation::Push);
+		working_stack.push(value);
+
+		while !working_stack.is_empty() &&
+			(
+				(last_index_in_sorted_prefix.is_none() && index_in_unique_sorted[working_stack.last().unwrap()] == 0)
+				|| (last_index_in_sorted_prefix.is_some() && index_in_unique_sorted[working_stack.last().unwrap()] == last_index_in_sorted_prefix.unwrap() + 1)
+			)
+		{
+			last_index_in_sorted_prefix = Some(index_in_unique_sorted[working_stack.pop().unwrap()]);
+
+			operations.push(Operation::Pop);
 		}
-	} else {
-		let mut deduped = vec.clone();
-		deduped.dedup();
+	}
 
-		if vec.len() != deduped.len() { panic!() }
+	if !working_stack.is_empty() {
+		output.println("impossible");
+	} else {
+		operations.iter().for_each(|op| output.println(match op {
+			Operation::Pop => "pop",
+			Operation::Push => "push"
+		}));
 	}
 }
