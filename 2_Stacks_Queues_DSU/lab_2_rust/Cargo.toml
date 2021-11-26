@@ -23,6 +23,10 @@ name = "D"
 path = "src/D.rs"
 
 [[bin]]
+name = "D_dequeue"
+path = "src/D_dequeue.rs"
+
+[[bin]]
 name = "E"
 path = "src/E.rs"
 
