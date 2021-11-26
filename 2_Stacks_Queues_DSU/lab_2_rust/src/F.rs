@@ -307,4 +307,6 @@ fn main() {
 			Operation::Push => "push"
 		}));
 	}
+
+	// Test deleting branch from remote
 }
