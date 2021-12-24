@@ -25,7 +25,7 @@ use std::cell::UnsafeCell;
 use std::ops::{Deref, Index, Add, Sub};
 use std::mem::size_of;
 use std::io::BufRead;
-use itertools::Itertools;
+// use itertools::Itertools;
 
 
 /// Writer
@@ -300,6 +300,23 @@ fn main() {
 		}
 	}
 
-	dbg!(dp);
-	dbg!(parent);
+	// dbg!(dp);
+	// dbg!(parent);
+
+	let mut path = Vec::new();
+	let mut cursor = (rows - 1, cols - 1);
+	while cursor != (0, 0) {
+		path.push(cursor);
+		cursor = parent[cursor.0][cursor.1].clone();
+	}
+	path.push((0, 0));
+	path.reverse();
+
+	println!("{}", dp[rows - 1][cols - 1]);
+	for (i, &this) in path[..path.len() - 1].iter().enumerate() {
+		let next = path[i + 1];
+		print!("{}", if next.0 == this.0 + 1 {"D"} else {"R"});
+	}
+	println!();
+
 }
