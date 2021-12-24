@@ -19,7 +19,7 @@ use {
 	}
 };
 use std::collections::HashMap;
-use std::cmp::{max, max_by_key};
+use std::cmp::{max};
 use std::borrow::Borrow;
 use std::cell::UnsafeCell;
 use std::ops::{Deref, Index, Add, Sub};
@@ -290,14 +290,16 @@ fn main() {
 
 	for r in 0..rows {
 		for c in 0..cols {
-			let best_ancestor = *[(r as isize - 1, c as isize), (r as isize, c as isize - 1)]
-				.iter().filter(|&(y, x)| *x > 0 && *y > 0)
-				.max_by_key(|&(y, x)| dp[y][x])
-				.unwrap();
-			let (anc_y, anc_x) = (best_ancestor.0 as usize, best_ancestor.1 as usize);
+			let best_ancestor = [(r as isize - 1, c as isize), (r as isize, c as isize - 1)]
+				.iter().filter(|&(y, x)| *x >= 0 && *y >= 0)
+				.map(|&(y, x)| (y as usize, x as usize))
+				.max_by_key(|&(y, x)| dp[y][x]);
 
-			dp[r][c] = pole[r][c] + dp[anc_y][anc_x];
-			parent[r][c] = (anc_y, anc_x);
+			dp[r][c] = pole[r][c] + best_ancestor.map(|(y, x)| dp[y][x]).unwrap_or_default();
+			parent[r][c] = best_ancestor.unwrap_or_default();
 		}
 	}
+
+	dbg!(dp);
+	dbg!(parent);
 }
