@@ -25,6 +25,8 @@ use std::cell::UnsafeCell;
 use std::ops::{Deref, Index, Add, Sub};
 use std::mem::size_of;
 use std::io::BufRead;
+use itertools::Itertools;
+
 
 /// Writer
 pub struct OutputWriter<W: Write> {
@@ -304,9 +306,10 @@ fn main() {
 	println!("{}",
 		std::iter::once(&0).chain(path.iter().rev())
 		.map(|&i| (i + 1))
+			.join(" ")
 		// .map(|int| int.to_string())
-		.map(usize::to_string)
-		.collect::<Vec<_>>()
-		.join(" ")
+		// .map(usize::to_string)
+		// .collect::<Vec<_>>()
+		// .join(" ")
 	);
 }
