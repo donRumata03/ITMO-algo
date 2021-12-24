@@ -19,7 +19,7 @@ use {
 	}
 };
 use std::collections::HashMap;
-use std::cmp::{max};
+use std::cmp::{max, max_by_key};
 use std::borrow::Borrow;
 use std::cell::UnsafeCell;
 use std::ops::{Deref, Index, Add, Sub};
@@ -282,5 +282,22 @@ fn main() {
 		}
 	}
 
+	let mut dp = vec![vec![0i64; cols]; rows];
+	let mut parent = vec![vec![(0usize, 0usize); cols]; rows];
 
+	// for r in 0..rows { dp[r][0] = ?; }
+	// for c in 0..cols { dp[0][c] = ?; }
+
+	for r in 0..rows {
+		for c in 0..cols {
+			let best_ancestor = *[(r as isize - 1, c as isize), (r as isize, c as isize - 1)]
+				.iter().filter(|&(y, x)| *x > 0 && *y > 0)
+				.max_by_key(|&(y, x)| dp[y][x])
+				.unwrap();
+			let (anc_y, anc_x) = (best_ancestor.0 as usize, best_ancestor.1 as usize);
+
+			dp[r][c] = pole[r][c] + dp[anc_y][anc_x];
+			parent[r][c] = (anc_y, anc_x);
+		}
+	}
 }
