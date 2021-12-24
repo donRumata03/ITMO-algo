@@ -22,10 +22,12 @@ use std::collections::{HashMap, HashSet};
 use std::cmp::{max};
 use std::borrow::Borrow;
 use std::cell::UnsafeCell;
-use std::ops::{Deref, Index, Add, Sub};
+use std::ops::{Deref, Index, Add, Sub, AddAssign};
 use std::mem::size_of;
 use std::io::BufRead;
 use itertools::{iproduct, Itertools};
+use std::iter::Sum;
+use std::fmt::Formatter;
 
 
 /// Writer
@@ -270,6 +272,50 @@ impl_readable_from!{ f64, [f32] }
 //     ($I:expr, $J:expr, $($K:expr),+) => { ... };
 // }
 
+const MOD: u64 = 1_000_000_000;
+#[derive(Debug)]
+#[derive(Copy, Clone)]
+struct ModularInt {
+	v: u64,
+	modulo: u64
+}
+
+impl ModularInt {
+	pub fn from(v: u64, modulo: u64) -> Self {
+		ModularInt { v: v % modulo, modulo }
+	}
+
+	pub fn default() -> Self {
+		ModularInt { v: 0, modulo: MOD }
+	}
+}
+
+impl Display for ModularInt {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}", self.v)
+	}
+}
+
+impl Add for ModularInt {
+	type Output = ModularInt;
+
+	fn add(self, rhs: Self) -> Self::Output {
+		assert_eq!(self.modulo, rhs.modulo);
+		ModularInt::from(self.v + rhs.v, self.modulo)
+	}
+}
+
+impl AddAssign for ModularInt {
+	fn add_assign(&mut self, rhs: Self) {
+		*self = *self + rhs;
+	}
+}
+
+impl Sum for ModularInt {
+	fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+		iter.fold(Self::default(), |l, r| l + r)
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -319,12 +365,12 @@ fn main() {
 	);
 
 	let n = input.next();
-	let mut dp = vec![vec![1u64; 3]; 4];
-	dp[2][1] = 0;
-	dp[3][1] = 0;
+	let mut dp = vec![vec![ModularInt::from(1u64, MOD); 3]; 4];
+	dp[2][1] = ModularInt::from(0u64, MOD);
+	dp[3][1] = ModularInt::from(0u64, MOD);
 
 	for i in 1_usize..n {
-		let mut new_dp = vec![vec![0u64; 3]; 4];
+		let mut new_dp = vec![vec![ModularInt::from(0u64, MOD); 3]; 4];
 		for from in gen_valid_positions() {
 			for to in get_knight_moves(&from) {
 				new_dp[to.0 as usize][to.1 as usize] += dp[from.0 as usize][from.1 as usize];
@@ -333,7 +379,7 @@ fn main() {
 		std::mem::swap(&mut dp, &mut new_dp);
 	}
 
-	dbg!(&dp);
+	// dbg!(&dp);
 
-	println!("{}", dp.iter().map(|vec| vec.iter().sum::<u64>()).sum::<u64>())
+	println!("{}", dp.into_iter().map(|vec| vec.into_iter().sum::<ModularInt>()).sum::<ModularInt>())
 }
