@@ -25,7 +25,7 @@ use std::cell::UnsafeCell;
 use std::ops::{Deref, Index, Add, Sub, AddAssign};
 use std::mem::size_of;
 use std::io::BufRead;
-use itertools::{iproduct, Itertools};
+// use itertools::{iproduct, Itertools};
 use std::iter::Sum;
 use std::fmt::Formatter;
 
@@ -325,7 +325,14 @@ impl Sum for ModularInt {
 struct Point (i64, i64);
 
 fn gen_valid_positions() -> Vec<Point> {
-	return iproduct!( 0i64..4, 0i64..3 )
+	let mut candidates = Vec::new();
+	for i in 0i64..4 {
+		for j in 0i64..3 {
+			candidates.push((i, j));
+		}
+	}
+
+	candidates.into_iter()
 		.map(|(y, x)| Point(y, x))
 		.filter(|p| pos_is_valid(p))
 		.collect()
@@ -340,15 +347,16 @@ fn is_knight_move(start: &Point, end: &Point) -> bool {
 	// dbg!(start);
 	// dbg!(end);
 	// dbg!(
-		(&[(start.0 - end.0).abs(), (start.1 - end.1).abs()]).into_iter()
-			.sorted().collect::<Vec<_>>()
-			== [&1, &2]
+	let mut diff = [(start.0 - end.0).abs(), (start.1 - end.1).abs()];
+	diff.sort_unstable();
+
+	diff == [1, 2]
 }
 
 fn get_knight_moves(start: &Point) -> Vec<Point> {
-	iproduct!( 0i64..4, 0i64..3 )
-		.filter(|&(y, x)| pos_is_valid(&Point(y, x)) && is_knight_move(start, &Point(y, x)))
-		.map(|(y, x)| Point(y, x))
+	// iproduct!( 0i64..4, 0i64..3 )
+	gen_valid_positions().into_iter()
+		.filter(|p| is_knight_move(start, p))
 		.collect()
 }
 
