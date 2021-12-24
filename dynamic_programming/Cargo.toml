@@ -16,7 +16,7 @@ path = "src/B.rs"
 
 [[bin]]
 name = "с"
-path = "src/С.rs"
+path = "src/C.rs"
 
 [[bin]]
 name = "d"
