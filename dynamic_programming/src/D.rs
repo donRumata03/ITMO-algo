@@ -278,6 +278,13 @@ impl_readable_from!{ f64, [f32] }
 #[derive(Hash)]
 struct Point (i64, i64);
 
+fn gen_valid_positions() -> Vec<Point> {
+	return iproduct!( 0i64..4, 0i64..3 )
+		.map(|(y, x)| Point(y, x))
+		.filter(|p| pos_is_valid(p))
+		.collect()
+}
+
 fn pos_is_valid(pos: &Point) -> bool {
 	*pos == Point(3, 1)
 		|| [pos.0, pos.1].iter().all(|&c| 0 <= c && c < 3)
@@ -303,8 +310,6 @@ fn main() {
 	let mut input = InputReader::new();
 	let mut output = OutputWriter::new();
 
-	// let n = input.next();
-
 	assert_eq!(
 		get_knight_moves(&Point(1, 2))
 			.into_iter().collect::<HashSet<_>>(),
@@ -313,4 +318,22 @@ fn main() {
 			.into_iter().collect::<HashSet<_>>()
 	);
 
+	let n = input.next();
+	let mut dp = vec![vec![1u64; 3]; 4];
+	dp[2][1] = 0;
+	dp[3][1] = 0;
+
+	for i in 1_usize..n {
+		let mut new_dp = vec![vec![0u64; 3]; 4];
+		for from in gen_valid_positions() {
+			for to in get_knight_moves(&from) {
+				new_dp[to.0 as usize][to.1 as usize] += dp[from.0 as usize][from.1 as usize];
+			}
+		}
+		std::mem::swap(&mut dp, &mut new_dp);
+	}
+
+	dbg!(&dp);
+
+	println!("{}", dp.iter().map(|vec| vec.iter().sum::<u64>()).sum::<u64>())
 }
