@@ -83,8 +83,15 @@ impl<W: Write> Drop for OutputWriter<W> {
 	fn drop(&mut self) { self.flush().unwrap(); }
 }
 
+macro_rules! EOF {
+    // `()` indicates that the macro takes no argument.
+    () => {
+        // The macro will expand into the contents of this block.
+        "InputReader: Reached end of input!"
+    };
+}
 
-const EOF: &'static str = "InputReader: Reached end of input!";
+// const EOF: &'static str = ;
 
 pub struct InputReader<R: Read> {
 	reader: R,
@@ -120,7 +127,7 @@ impl<R: Read> InputReader<R> {
 	}
 
 	pub fn next_line(&mut self) -> String {
-		assert!(self.has_more(), EOF);
+		assert!(self.has_more(), EOF!());
 		let mut line = String::new();
 		while self.peek() != '\n' {
 			line.push(self.peek());
@@ -155,7 +162,7 @@ impl<R: Read> InputReader<R> {
 
 	fn consume_until<F: Fn(char) -> bool>(&mut self, test: F) {
 		loop {
-			assert!(self.has_more(), EOF);
+			assert!(self.has_more(), EOF!());
 			if test(self.peek()) { return; }
 			self.consume();
 		}
@@ -167,7 +174,7 @@ impl<R: Read> InputReader<R> {
 			if self.peek() != '-' { return 1; }
 
 			self.consume();
-			assert!(self.has_more(), EOF);
+			assert!(self.has_more(), EOF!());
 			if self.peek().is_ascii_digit() { return -1; }
 		}
 	}
