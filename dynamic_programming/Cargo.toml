@@ -18,6 +18,11 @@ path = "src/B.rs"
 name = "с"
 path = "src/С.rs"
 
+[[bin]]
+name = "d"
+path = "src/D.rs"
+
+
 
 [dependencies]
 itertools = "0.10.3"
