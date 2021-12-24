@@ -284,8 +284,10 @@ impl ModularInt {
 	pub fn from(v: u64, modulo: u64) -> Self {
 		ModularInt { v: v % modulo, modulo }
 	}
+}
 
-	pub fn default() -> Self {
+impl Default for ModularInt {
+	fn default() -> Self {
 		ModularInt { v: 0, modulo: MOD }
 	}
 }
@@ -360,6 +362,14 @@ fn get_knight_moves(start: &Point) -> Vec<Point> {
 		.collect()
 }
 
+fn board_of<T: Default + Clone>(v: &T) -> Vec<Vec<T>> {
+	let mut res = vec![vec![v.clone(); 3]; 4];
+	res[3][0] = T::default();
+	res[3][2] = T::default();
+
+	res
+}
+
 fn main() {
 	let mut input = InputReader::new();
 	let mut output = OutputWriter::new();
@@ -373,12 +383,12 @@ fn main() {
 	);
 
 	let n = input.next();
-	let mut dp = vec![vec![ModularInt::from(1u64, MOD); 3]; 4];
+	let mut dp = board_of(&ModularInt::from(1u64, MOD));
 	dp[2][1] = ModularInt::from(0u64, MOD);
 	dp[3][1] = ModularInt::from(0u64, MOD);
 
 	for i in 1_usize..n {
-		let mut new_dp = vec![vec![ModularInt::from(0u64, MOD); 3]; 4];
+		let mut new_dp = board_of(&ModularInt::from(0u64, MOD));
 		for from in gen_valid_positions() {
 			for to in get_knight_moves(&from) {
 				new_dp[to.0 as usize][to.1 as usize] += dp[from.0 as usize][from.1 as usize];
