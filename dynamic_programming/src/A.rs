@@ -263,7 +263,6 @@ impl_readable_from!{ f64, [f32] }
 
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn main() {
@@ -304,7 +303,9 @@ fn main() {
 
 	println!("{}",
 		std::iter::once(&0).chain(path.iter().rev())
-		.map(|&i| (i + 1).to_string())
+		.map(|&i| (i + 1))
+		// .map(|int| int.to_string())
+		.map(usize::to_string)
 		.collect::<Vec<_>>()
 		.join(" ")
 	);

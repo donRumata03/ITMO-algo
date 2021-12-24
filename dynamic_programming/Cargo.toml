@@ -10,5 +10,10 @@ edition = "2018"
 name = "a"
 path = "src/A.rs"
 
+[[bin]]
+name = "b"
+path = "src/B.rs"
+
 
 [dependencies]
+itertools = "0.10.3"
