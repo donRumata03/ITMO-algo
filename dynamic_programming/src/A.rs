@@ -290,7 +290,7 @@ fn main() {
 		dp.push(((best_prev.1).0 + costs[i], best_prev.0));
 	}
 
-	println!("{:?}", dp);
+	// println!("{:?}", dp);
 
 	let mut path = Vec::new();
 	let mut cur_v = n - 1;
@@ -300,7 +300,7 @@ fn main() {
 		cur_v = dp[cur_v].1;
 	}
 
-	// println!("{}\n{}", dp[n - 1].0, path.len() + 1);
+	println!("{}\n{}", dp[n - 1].0, path.len());
 
 	println!("{}",
 		std::iter::once(&0).chain(path.iter().rev())
