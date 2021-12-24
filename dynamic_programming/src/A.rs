@@ -254,9 +254,51 @@ impl_readable_from!{ f64, [f32] }
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 fn main() {
 	let mut input = InputReader::new();
 	let mut output = OutputWriter::new();
 
+	let n: usize = input.next();
+	let k: usize = input.next();
 
+	let mut costs = vec![0i64];
+	for _ in 0..n - 2 {
+		costs.push(input.next());
+	}
+	costs.push(0);
+
+	let mut dp = vec![(0_i64, 0usize)];
+
+	for i in 1..n {
+		let best_prev = ((0.max(i as isize - k as isize) as usize)..i)
+			.map(|j| (j, dp[j]))
+			.max_by_key(|(_j, (v, _p))| *v)
+			.unwrap();
+
+		dp.push(((best_prev.1).0 + costs[i], best_prev.0));
+	}
+
+	println!("{:?}", dp);
+
+	let mut path = Vec::new();
+	let mut cur_v = n - 1;
+
+	while cur_v != 0 {
+		path.push(cur_v);
+		cur_v = dp[cur_v].1;
+	}
+
+	// println!("{}\n{}", dp[n - 1].0, path.len() + 1);
+
+	println!("{}",
+		std::iter::once(&0).chain(path.iter().rev())
+		.map(|&i| (i + 1).to_string())
+		.collect::<Vec<_>>()
+		.join(" ")
+	);
 }
