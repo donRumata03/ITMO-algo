@@ -275,6 +275,10 @@ fn option_if_with<T, Gen>(f: Gen, condition: bool) -> Option<T>
 	if condition { Some(f()) } else { None }
 }
 
+fn circular(n: usize) -> impl Iterator<Item=(usize, usize)> {
+	(0..n).zip((0..n).cycle().skip(1))
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -282,7 +286,7 @@ fn main() {
 	let mut input = InputReader::new();
 	let mut output = OutputWriter::new();
 
-	let n = input.next();
+	let n: usize = input.next();
 	let mut dist: Vec<Vec<u64>> = vec![];
 	for _ in 0..n {
 		dist.push(vec![]);
@@ -290,6 +294,37 @@ fn main() {
 			dist.last_mut().unwrap().push(input.next());
 		}
 	}
+	let get_way_length = |way: Vec<usize>| circular(way.len()).map(|(left, right)| dist[way[left]][way[right]]).sum();
+
+	// For each msk: best circular path through them
+	let mut dp = vec![(vec![], u64::MAX); 2usize.pow(n as u32)];
+	dp[0].1 = 0;
+
+	let v = vec![1];
+	// println!("{:?}", &v[..2]);
+
+	for msk in 1..dp.len() {
+		let this_len = msk.count_ones() as usize;
+		for last in (0..n).filter(|&i| msk & (1 << i) != 0) {
+			let submsk = msk ^ (1 << last);
+			for ins_index in 0..=this_len {
+				let new_seq: Vec<usize> = dp[submsk].0
+					[..ins_index.min(dp[submsk].0.len())].iter()
+					.chain(once(&last))
+					.chain(dp[submsk].0[ins_index.min(dp[submsk].0.len())..].iter())
+					.cloned()
+					.collect();
+				let new_l = get_way_length(new_seq.clone());
+				if new_l < dp[msk].1 {
+					dp[msk] = (new_seq, new_l);
+				}
+			}
+		}
+	}
 
 
+	dp.sort_by_key(|(v, l)|v.len());
+	dbg!(dp);
+
+	// println!(dp[]);
 }
