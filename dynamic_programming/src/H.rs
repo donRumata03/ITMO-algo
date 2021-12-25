@@ -279,6 +279,10 @@ fn circular(n: usize) -> impl Iterator<Item=(usize, usize)> {
 	(0..n).zip((0..n).cycle().skip(1))
 }
 
+fn consec(n: usize) -> impl Iterator<Item=(usize, usize)> {
+	(0..n).zip(1..n)
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -294,7 +298,7 @@ fn main() {
 			dist.last_mut().unwrap().push(input.next());
 		}
 	}
-	let get_way_length = |way: Vec<usize>| circular(way.len()).map(|(left, right)| dist[way[left]][way[right]]).sum();
+	let get_way_length = |way: Vec<usize>| consec(way.len()).map(|(left, right)| dist[way[left]][way[right]]).sum();
 
 	// For each msk: best circular path through them
 	let mut dp = vec![(vec![], u64::MAX); 2usize.pow(n as u32)];
@@ -323,8 +327,10 @@ fn main() {
 	}
 
 
-	dp.sort_by_key(|(v, l)|v.len());
-	dbg!(dp);
+	// dp.sort_by_key(|(v, l)|v.len());
+	// dbg!(dp);
 
-	// println!(dp[]);
+	let ans = dp.last().unwrap();
+	println!("{}", ans.1);
+	println!("{}", ans.0.iter().map(|v| (v + 1).to_string()).collect::<Vec<_>>().join(" "));
 }
