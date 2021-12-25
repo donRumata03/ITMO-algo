@@ -28,6 +28,7 @@ use std::io::{BufRead, repeat};
 // use itertools::{iproduct, Itertools};
 use std::iter::Sum;
 use std::fmt::Formatter;
+// use itertools::enumerate;
 
 
 /// Writer
@@ -280,31 +281,25 @@ fn optimize_food(prices: Vec<usize>) -> (usize, Vec<usize>, usize, usize) {
 	/// `dp[c]` at day `t`: smallest sum spent with `c` coupons unused
 	/// dp[c] -> new_dp[c - 1] if c > 0; -> `new_dp[c (+ 1 if cost > 100)?] + cost`
 	/// // either (use) or (pay and get coupon if should pay enough)
-	let mut dp = vec![0_usize];
+	let mut dp = vec![Some(0_usize)];
 	let mut use_coupon = vec![];
 
 	for d in 0..days {
-		let mut this_use_coupon = Vec::new();
-		let mut new_dp = Vec::new();
+		let mut this_use_coupon = vec![false; dp.len() + 1];
+		let mut new_dp = vec![None; dp.len() + 1];
 
-		// let update_coupons = ;
-
-		for prev_c in 0..dp.len() {
-			option_if_with(|| (true, prev_c - 1, dp[prev_c]), prev_c > 0).into_iter()
-				.chain(
-					once((false, prev_c, dp[prev_c] + prices[d]))
-				)
-				.chain(
-					option_if((false, prev_c + 1, dp[prev_c] + prices[d]), prices[d] > 100)
-				)
+		for (prev_coupons, prev_cost) in dp.iter()
+			.enumerate()
+			.filter(|&(i, v)| v.is_some())
+			.map(|(i, v)| (i, v.unwrap()))
+		{
+			option_if_with(|| (true, prev_coupons - 1, prev_cost), prev_coupons > 0).into_iter()
+				.chain(once(
+					(false, prev_coupons + if prices[d] > 100 {1} else {0}, prev_cost + prices[d])
+				))
 			.for_each(|(use_coupon, c, opt_cost)| {
-				if c >= new_dp.len() {
-					new_dp.resize(c + 1, usize::MAX);
-					this_use_coupon.resize(c + 1, false);
-				}
-
-				if opt_cost < new_dp[c] {
-					new_dp[c] = opt_cost;
+				if new_dp[c].is_none() || opt_cost < new_dp[c].unwrap() {
+					new_dp[c] = Some(opt_cost);
 					this_use_coupon[c] = use_coupon;
 				}
 			});
@@ -316,6 +311,8 @@ fn optimize_food(prices: Vec<usize>) -> (usize, Vec<usize>, usize, usize) {
 
 	let (best_coupons, min_cost) = dp.into_iter()
 		.enumerate()
+		.filter(|&(_, v)| v.is_some())
+		.map(|(i, v)| (i, v.unwrap()))
 		.min_by_key(|&(_, v)| v)
 		.unwrap();
 
@@ -331,6 +328,7 @@ fn optimize_food(prices: Vec<usize>) -> (usize, Vec<usize>, usize, usize) {
 			if prices[d] > 100 { current_coupons -= 1; };
 		}
 	}
+	assert_eq!(current_coupons, 0);
 
 	(min_cost, to_buy.into_iter().rev().collect(), best_coupons, applied_coupons)
 }
@@ -349,5 +347,9 @@ fn main() {
 		costs.push(input.next());
 	}
 
-	dbg!(optimize_food(costs));
+	let (opt_cost, days, left_coupons, all_coupons) = optimize_food(costs);
+
+	println!("{}", opt_cost);
+	println!("{} {}", left_coupons, all_coupons);
+	println!("{}", days.iter().map(|&d| (d + 1).to_string()).collect::<Vec<_>>().join("\n"));
 }
