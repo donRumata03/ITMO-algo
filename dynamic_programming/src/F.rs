@@ -274,7 +274,7 @@ fn option_if_with<T, Gen>(f: Gen, condition: bool) -> Option<T>
 	if condition { Some(f()) } else { None }
 }
 
-fn optimize_food(prices: Vec<usize>) -> (usize, Vec<usize>) {
+fn optimize_food(prices: Vec<usize>) -> (usize, Vec<usize>, usize, usize) {
 	let days = prices.len();
 
 	/// `dp[c]` at day `t`: smallest sum spent with `c` coupons unused
@@ -298,8 +298,6 @@ fn optimize_food(prices: Vec<usize>) -> (usize, Vec<usize>) {
 					option_if((false, prev_c + 1, dp[prev_c] + prices[d]), prices[d] > 100)
 				)
 			.for_each(|(use_coupon, c, opt_cost)| {
-				dbg!((use_coupon, c, opt_cost, &new_dp));
-
 				if c >= new_dp.len() {
 					new_dp.resize(c + 1, usize::MAX);
 					this_use_coupon.resize(c + 1, false);
@@ -309,21 +307,32 @@ fn optimize_food(prices: Vec<usize>) -> (usize, Vec<usize>) {
 					new_dp[c] = opt_cost;
 					this_use_coupon[c] = use_coupon;
 				}
-
-				dbg!((use_coupon, c, opt_cost, &new_dp));
 			});
 		}
 
-		dbg!(&this_use_coupon);
-		dbg!(&new_dp);
 		use_coupon.push(this_use_coupon);
 		dp = new_dp;
 	}
 
-	let mut path = Vec::new();
+	let (best_coupons, min_cost) = dp.into_iter()
+		.enumerate()
+		.min_by_key(|&(_, v)| v)
+		.unwrap();
 
+	let mut to_buy = Vec::new();
+	let mut applied_coupons = 0;
+	let mut current_coupons = best_coupons;
+	for d in (0..days).rev() {
+		if use_coupon[d][current_coupons] {
+			current_coupons += 1;
+			applied_coupons += 1;
+			to_buy.push(d);
+		} else {
+			if prices[d] > 100 { current_coupons -= 1; };
+		}
+	}
 
-	(dp.into_iter().min().unwrap(), path)
+	(min_cost, to_buy.into_iter().rev().collect(), best_coupons, applied_coupons)
 }
 
 fn main() {
