@@ -381,3 +381,16 @@ fn main() {
 	println!("{}", best_way.1);
 	println!("{}", best_way.0.iter().map(|v| (v + 1).to_string()).collect::<Vec<_>>().join(" "));
 }
+
+
+/*
+
+5
+0 1  7  5  9
+1 0  99 4  50
+7 99 0  12 35
+5 4  12 0  6
+9 50 35 6  0
+
+
+*/
