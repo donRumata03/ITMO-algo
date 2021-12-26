@@ -325,6 +325,7 @@ fn main() {
 		let _this_len = msk.count_ones() as usize;
 
 		for new_last in ones(msk) {
+			assert_ne!(msk & (1 << new_last), 0);
 			let submsk = msk ^ (1 << new_last);
 
 			// If add to existing one:
@@ -354,8 +355,8 @@ fn main() {
 			}
 
 			// If can create new:
-			if parent_dp.is_empty() != (submsk.count_ones() == 0) {
-				loop {}
+			if parent_dp.is_empty() != (submsk.count_ones() == 0) && parent_dp.is_empty() {
+				loop {} // parent_dp.is_empty(); submsk.count_ones() != 0
 			}
 			assert_eq!(parent_dp.is_empty(), submsk.count_ones() == 0);
 			if parent_dp.is_empty() {
@@ -366,7 +367,13 @@ fn main() {
 
 
 	// dp.sort_by_key(|(v, l)|v.len());
-	// dbg!(dp);
+	for (msk, ways) in dp.iter().enumerate() {
+		println!("{:#08b}", msk);
+		for (&last, way) in ways.iter() {
+			println!("{}: {} ({})", last, way.0.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(" "), way.1)
+		}
+
+	}
 
 	let full_ways = dp.last().unwrap();
 	// dbg!(full_ways);
