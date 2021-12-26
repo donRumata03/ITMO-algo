@@ -28,6 +28,7 @@ use std::io::{BufRead, repeat};
 // use itertools::{iproduct, Itertools};
 use std::iter::Sum;
 use std::fmt::Formatter;
+use std::collections::hash_map::Entry;
 // use itertools::enumerate;
 
 
@@ -282,13 +283,29 @@ fn circular(n: usize) -> impl Iterator<Item=(usize, usize)> {
 fn consec(n: usize) -> impl Iterator<Item=(usize, usize)> {
 	(0..n).zip(1..n)
 }
+fn ones(msk: usize) -> impl Iterator<Item=usize> + 'static {
+	(0..std::mem::size_of::<usize>()).filter(move |&i| msk & (1 << i) != 0)
+}
+
+fn get_non_equal_indexes<T>(vec: &mut Vec<T>, i: usize, j: usize) -> (&mut T, &mut T) {
+	assert_ne!(i, j);
+
+	let ith: &mut T;
+	let jth: &mut T;
+	unsafe {
+		ith = (vec.as_mut_ptr().offset(i as isize)).as_mut().unwrap();
+		jth = (vec.as_mut_ptr().offset(j as isize)).as_mut().unwrap();
+	}
+
+	(ith, jth)
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 fn main() {
 	let mut input = InputReader::new();
-	let mut output = OutputWriter::new();
+	let mut _output = OutputWriter::new();
 
 	let n: usize = input.next();
 	let mut dist: Vec<Vec<u64>> = vec![];
@@ -300,28 +317,49 @@ fn main() {
 	}
 	let get_way_length = |way: Vec<usize>| consec(way.len()).map(|(left, right)| dist[way[left]][way[right]]).sum();
 
-	// For each msk: best circular path through them
-	let mut dp = vec![(vec![], u64::MAX); 2usize.pow(n as u32)];
-	dp[0].1 = 0;
-
-	let v = vec![1];
-	// println!("{:?}", &v[..2]);
+	// For each msk and last element: best path through them with given last
+	let mut dp: Vec<HashMap<usize, (Vec<usize>, u64)>> = vec![HashMap::new(); 2usize.pow(n as u32)];
+	// dp[0].insert(0_usize, (vec![], 0_u64));
 
 	for msk in 1..dp.len() {
-		let this_len = msk.count_ones() as usize;
-		for last in (0..n).filter(|&i| msk & (1 << i) != 0) {
-			let submsk = msk ^ (1 << last);
-			for ins_index in 0..=this_len {
-				let new_seq: Vec<usize> = dp[submsk].0
-					[..ins_index.min(dp[submsk].0.len())].iter()
-					.chain(once(&last))
-					.chain(dp[submsk].0[ins_index.min(dp[submsk].0.len())..].iter())
+		let _this_len = msk.count_ones() as usize;
+
+		for new_last in ones(msk) {
+			let submsk = msk ^ (1 << new_last);
+
+			// If add to existing one:
+			let (parent_dp, this_dp) = get_non_equal_indexes(&mut dp, submsk, msk);
+			for (_, (prev_path, _)) in parent_dp.iter() {
+				let new_path: Vec<usize> = prev_path.iter()
+					.chain(once(&new_last))
 					.cloned()
 					.collect();
-				let new_l = get_way_length(new_seq.clone());
-				if new_l < dp[msk].1 {
-					dp[msk] = (new_seq, new_l);
-				}
+
+				let new_l = get_way_length(new_path.clone());
+				match this_dp.entry(new_last) {
+					Entry::Occupied(o) => {
+						let cell = o.into_mut();
+						if cell.1 > new_l {
+							*cell = (new_path, new_l);
+						}
+					}
+					Entry::Vacant(v) => {
+						v.insert((new_path, new_l));
+					}
+				};
+				// }
+				// if new_l < dp[msk][&new_last].1 {
+				// 	*dp[msk].get_mut(&new_last) = (new_path, new_l);
+				// }
+			}
+
+			// If can create new:
+			if parent_dp.is_empty() != (submsk.count_ones() == 0) {
+				loop {}
+			}
+			assert_eq!(parent_dp.is_empty(), submsk.count_ones() == 0);
+			if parent_dp.is_empty() {
+				this_dp.insert(new_last, (vec![new_last], 0_u64));
 			}
 		}
 	}
@@ -330,7 +368,9 @@ fn main() {
 	// dp.sort_by_key(|(v, l)|v.len());
 	// dbg!(dp);
 
-	let ans = dp.last().unwrap();
-	println!("{}", ans.1);
-	println!("{}", ans.0.iter().map(|v| (v + 1).to_string()).collect::<Vec<_>>().join(" "));
+	let full_ways = dp.last().unwrap();
+	// dbg!(full_ways);
+	let best_way = full_ways.iter().min_by_key(|(&last, (_path, l))| l).unwrap().1;
+	println!("{}", best_way.1);
+	println!("{}", best_way.0.iter().map(|v| (v + 1).to_string()).collect::<Vec<_>>().join(" "));
 }
