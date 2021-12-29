@@ -39,6 +39,11 @@ name = "h"
 path = "src/H.rs"
 
 
+[[bin]]
+name = "j"
+path = "src/J.rs"
+
+
 
 [dependencies]
 itertools = "0.10.3"
