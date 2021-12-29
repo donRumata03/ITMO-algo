@@ -283,9 +283,11 @@ fn circular(n: usize) -> impl Iterator<Item=(usize, usize)> {
 fn consec(n: usize) -> impl Iterator<Item=(usize, usize)> {
 	(0..n).zip(1..n)
 }
-fn ones(msk: usize) -> impl Iterator<Item=usize> + 'static {
-	(0..std::mem::size_of::<usize>()).filter(move |&i| msk & (1 << i) != 0)
+
+fn ones(msk: usize) -> impl Iterator<Item=usize> {
+	(0..std::mem::size_of::<usize>() * 8).filter(move |&i| msk & (1 << i) != 0)
 }
+
 
 fn get_non_equal_indexes<T>(vec: &mut Vec<T>, i: usize, j: usize) -> (&mut T, &mut T) {
 	assert_ne!(i, j);
@@ -367,13 +369,13 @@ fn main() {
 
 
 	// dp.sort_by_key(|(v, l)|v.len());
-	for (msk, ways) in dp.iter().enumerate() {
-		println!("{:#08b}", msk);
-		for (&last, way) in ways.iter() {
-			println!("{}: {} ({})", last, way.0.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(" "), way.1)
-		}
-
-	}
+	// for (msk, ways) in dp.iter().enumerate() {
+	// 	println!("{:#08b}", msk);
+	// 	for (&last, way) in ways.iter() {
+	// 		println!("{}: {} ({})", last, way.0.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(" "), way.1)
+	// 	}
+	//
+	// }
 
 	let full_ways = dp.last().unwrap();
 	// dbg!(full_ways);
