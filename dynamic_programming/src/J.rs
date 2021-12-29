@@ -281,8 +281,8 @@ fn circular(n: usize) -> impl Iterator<Item=(usize, usize)> {
 fn consec(n: usize) -> impl Iterator<Item=(usize, usize)> {
 	(0..n).zip(1..n)
 }
-fn ones(msk: usize) -> impl Iterator<Item=usize> + 'static {
-	(0..std::mem::size_of::<usize>()).filter(move |&i| msk & (1 << i) != 0)
+fn ones(msk: usize) -> impl Iterator<Item=usize> {
+	(0..std::mem::size_of::<usize>() * 8).filter(move |&i| msk & (1 << i) != 0)
 }
 
 fn get_non_equal_indexes<T>(vec: &mut Vec<T>, i: usize, j: usize) -> (&mut T, &mut T) {
