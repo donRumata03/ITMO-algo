@@ -43,6 +43,11 @@ path = "src/H.rs"
 name = "j"
 path = "src/J.rs"
 
+[[bin]]
+name = "k"
+path = "src/K.rs"
+
+
 
 
 [dependencies]
