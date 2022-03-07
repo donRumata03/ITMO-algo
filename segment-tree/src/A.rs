@@ -1,5 +1,6 @@
 use std::ops::{Add, Range};
 use std::cmp;
+use std::cmp::min;
 use std::marker::PhantomData;
 
 
@@ -26,48 +27,108 @@ impl<T: From<i64> + Add<Output=T>> ReductionOp<T> for SumReduction<T> {
 
 ///_____________________________________________________________________________
 
-trait ModificationQuery {}
-trait ReductionQuery {}
+trait ModificationQuery<RElement> {}
+trait ReductionQuery<RElement> {}
 
-struct ElementModificationQuery<Element> {
+struct ElementModificationQuery<RElement> {
 	position: usize,
-	new_element: Element,
+	new_element: RElement,
 }
 
-impl ModificationQuery for ElementModificationQuery<Element> {
-	
-}
+// impl<RElement> ModificationQuery for ElementModificationQuery<RElement> {}
 
-struct SegmentModificationQuery<Element> {
+struct SegmentModificationQuery<RElement> {
 	segment: Range<usize>,
-	new_element: Element,
-}
-
-struct ElementReductionQuery<Element> {
-	element: usize
-}
-
-struct SegmentReductionQuery<Element> {
-	segment: Range<usize>
+	new_element: RElement,
 }
 
 
-trait SegmentTree<ModificationQuery> {
+struct ElementReductionQuery<RElement> {
+	element_index: usize,
+	_t: std::marker::PhantomData<RElement>
+}
+
+struct SegmentReductionQuery<RElement> {
+	segment: Range<usize>,
+	_t: std::marker::PhantomData<RElement>
+}
+
+
+trait SegmentTree<RElement, MQ: ModificationQuery<RElement>, RQ: ReductionQuery<RElement>> {
 
 }
 
 ///_____________________________________________________________________________
 
-struct SegmentTreeEngine<Element> {
-	data: Vec<Element>
+struct SegmentTreeEngine<RElement> {
+	data: Vec<RElement>
 }
 
-impl<Element> SegmentTreeEngine<Element> {
-	
+impl<RElement> SegmentTreeEngine<RElement> {
+
 }
+
+/// _____________________________________________________________________________
+
+struct MassReadSegmentTree<RElement, RQ: ReductionOp<RElement>> {
+	e: SegmentTreeEngine<RElement>,
+	_t: PhantomData<RQ>
+}
+
 
 
 /// _____________________________________________________________________________
+
+trait ComposableModificationQuery<RElement> {
+	fn compose(old: &Self, new: &Self) -> Self;
+}
+
+
+trait RecountableAfterMassApplication<RElement, MQ: ModificationQuery<RElement>> {
+	fn recount(query: MQ, len: usize);
+}
+
+enum SegmentAdditionAssignment {
+	Addition(i64),
+	Assignment(i64)
+}
+
+impl ComposableModificationQuery<i64> for SegmentAdditionAssignment {
+	fn compose(old: &Self, new: &Self) -> Self {
+		match (old, new) {
+			(_, SegmentAdditionAssignment::Assignment(v)) => {
+				SegmentAdditionAssignment::Assignment(*v)
+			},
+			(Self::Addition(v_old), Self::Addition(v_new)) => {
+				Self::Addition(v_old + v_new)
+			},
+			(Self::Assignment(v_assigned), Self::Addition(v_added)) => {
+				Self::Assignment(v_assigned + v_added)
+			}
+		}
+	}
+}
+
+struct MinReduction {
+
+}
+
+impl ReductionOp<i64> for MinReduction {
+	fn neutral() -> i64 {
+		i64::MAX
+	}
+
+	fn apply(left: i64, right: i64) -> i64 {
+		min(left, right)
+	}
+}
+
+// impl RecountableAfterMassApplication for MinReduction {
+//
+// }
+
+/// _____________________________________________________________________________
+
 
 
 fn main() {
