@@ -164,7 +164,7 @@ impl<
 	MD: ModificationDescriptor<RElement>,
 	RO: ReductionOp<RElement>
 > SegmentReducer<RElement, RO> for MassReadSegmentTree<RElement, MD, RO> {
-	fn reduce_segment(&mut self, q: SegmentReductionQuery<RElement, MD>) {
+	fn reduce_segment(&mut self, q: SegmentReductionQuery<RElement, RO>) {
 		todo!()
 	}
 }
@@ -246,6 +246,31 @@ struct MassReadWriteSegmentTree<
 > where RO: RecountableAfterMassApplication<RElement, MD> {
 	e: SegmentTreeEngine<RElement>,
 }
+
+impl<
+	RElement,
+	MD: ComposableModificationDescriptor<RElement>,
+	RO: ReductionOp<RElement>
+> SegmentModifier<RElement, MD> for MassReadWriteSegmentTree<RElement, MD, RO>
+	where RO: RecountableAfterMassApplication<RElement, MD>
+{
+	fn modify_segment(&mut self, q: ElementModificationQuery<RElement, MD>) {
+		todo!()
+	}
+}
+
+impl<
+	RElement,
+	MD: ComposableModificationDescriptor<RElement>,
+	RO: ReductionOp<RElement>
+> SegmentReducer<RElement, RO> for MassReadWriteSegmentTree<RElement, MD, RO>
+	where RO: RecountableAfterMassApplication<RElement, MD>
+{
+	fn reduce_segment(&mut self, q: SegmentReductionQuery<RElement, RO>) {
+		todo!()
+	}
+}
+
 
 
 /// _____________________________________________________________________________
