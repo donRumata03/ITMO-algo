@@ -79,19 +79,21 @@ struct MassReadSegmentTree<RElement, RQ: ReductionOp<RElement>> {
 
 /// _____________________________________________________________________________
 
-trait ComposableModificationQuery<RElement> {
+trait ComposableModificationQuery<RElement>: ModificationQuery<RElement> {
 	fn compose(old: &Self, new: &Self) -> Self;
 }
 
 
 trait RecountableAfterMassApplication<RElement, MQ: ModificationQuery<RElement>> {
-	fn recount(query: MQ, len: usize);
+	fn recount(reduction_element: &mut RElement, query: MQ, len: usize);
 }
 
 enum SegmentAdditionAssignment {
 	Addition(i64),
 	Assignment(i64)
 }
+
+impl ModificationQuery<i64> for SegmentAdditionAssignment {}
 
 impl ComposableModificationQuery<i64> for SegmentAdditionAssignment {
 	fn compose(old: &Self, new: &Self) -> Self {
@@ -123,9 +125,18 @@ impl ReductionOp<i64> for MinReduction {
 	}
 }
 
-// impl RecountableAfterMassApplication for MinReduction {
-//
-// }
+impl RecountableAfterMassApplication<i64, SegmentAdditionAssignment> for MinReduction {
+	fn recount(reduction_element: &mut i64, query: SegmentAdditionAssignment, _len: usize) {
+		match query {
+			SegmentAdditionAssignment::Addition(v) => {
+				*reduction_element += v;
+			},
+			SegmentAdditionAssignment::Assignment(v) => {
+				*reduction_element = v;
+			}
+		}
+	}
+}
 
 /// _____________________________________________________________________________
 
