@@ -27,7 +27,9 @@ impl<T: From<i64> + Add<Output=T>> ReductionOp<T> for SumReduction<T> {
 
 ///_____________________________________________________________________________
 
-trait ModificationDescriptor<RElement> {}
+trait ModificationDescriptor<RElement> {
+	fn apply(&self, argument: RElement) -> RElement;
+}
 
 
 // trait ModificationQuery<RElement> {}
@@ -143,14 +145,6 @@ impl<
 	fn build(initial_data: Vec<usize>) -> Self {
 		todo!()
 	}
-
-	// fn modify_element(q: ElementReductionQuery<RElement>) {
-	// 	todo!()
-	// }
-	//
-	// fn reduce(q: SegmentReductionQuery<RElement, RO>) -> RElement {
-	// 	todo!()
-	// }
 }
 
 impl<
@@ -189,9 +183,16 @@ enum SegmentAdditionAssignment {
 	Assignment(i64)
 }
 
-impl ModificationQuery<i64> for SegmentAdditionAssignment {}
+impl ModificationDescriptor<i64> for SegmentAdditionAssignment {
+	fn apply(&self, argument: i64) -> i64 {
+		match self {
+			Self::Addition(&v) => argument + v,
+			Self::Assignment(&v) => v,
+		}
+	}
+}
 
-impl ComposableModificationQuery<i64> for SegmentAdditionAssignment {
+impl ComposableModificationDescriptor<i64> for SegmentAdditionAssignment {
 	fn compose(old: &Self, new: &Self) -> Self {
 		match (old, new) {
 			(_, SegmentAdditionAssignment::Assignment(v)) => {
