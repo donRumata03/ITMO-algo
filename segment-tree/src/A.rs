@@ -75,7 +75,32 @@ struct MassReadSegmentTree<RElement, RQ: ReductionOp<RElement>> {
 	_t: PhantomData<RQ>
 }
 
+impl<RElement, RQ: ReductionOp<RElement>> Default for MassReadSegmentTree<RElement, RQ> {
+	fn default() -> Self {
+		MassReadSegmentTree {
+			e: SegmentTreeEngine{data:Vec::new()},
+			_t: Default::default()
+		}
+	}
+}
 
+impl<RElement, RQ: ReductionOp<RElement>> MassReadSegmentTree<RElement, RQ> {
+	fn fill_neutral(n: usize) -> Self {
+		todo!()
+	}
+
+	fn build(initial_data: Vec<usize>) -> Self {
+		todo!()
+	}
+
+	fn modify_element(q: ElementReductionQuery<RElement>) {
+		todo!()
+	}
+
+	fn reduce(q: SegmentReductionQuery<RElement>) -> RElement {
+		todo!()
+	}
+}
 
 /// _____________________________________________________________________________
 
