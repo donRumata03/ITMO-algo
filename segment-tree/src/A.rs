@@ -105,12 +105,35 @@ trait SegmentReducer<RElement, RO: ReductionOp<RElement>> {
 
 ///_____________________________________________________________________________
 
-struct SegmentTreeEngine<RElement> {
+struct SegmentTreeEngine<RElement, RO: ReductionOp<RElement>> {
 	data: Vec<RElement>
 }
 
-impl<RElement> SegmentTreeEngine<RElement> {
+impl<RElement, RO: ReductionOp<RElement>> SegmentTreeEngine<RElement, RO> {
+	fn left_child(i: usize) -> usize {
+		2 * i + 1
+	}
 
+	fn right_child(i: usize) -> usize {
+		2 * i + 2
+	}
+
+	fn parent(i: usize) -> usize {
+		(i - 1) / 2
+	}
+
+
+	fn fill_neutral(n: usize) -> Self {
+		todo!()
+	}
+
+	fn decompose_into_segments() -> Vec<Range<usize>> {
+		todo!()
+	}
+
+	fn visit() {
+
+	}
 }
 
 /// _____________________________________________________________________________
