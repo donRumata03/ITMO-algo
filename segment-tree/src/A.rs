@@ -13,7 +13,7 @@ trait CommutativeOp<T>: ReductionOp<T> {}
 trait DistributiveRelativeTo<T>: ReductionOp<T> {}
 
 
-struct SumReduction<T: From<i64> + Add<Output=T>> { _p: PhantomData<T> }
+struct SumReduction<T: From<i64> + Add<Output=T>> {  }
 
 impl<T: From<i64> + Add<Output=T>> ReductionOp<T> for SumReduction<T> {
 	fn neutral() -> T {
@@ -51,8 +51,7 @@ struct ElementReductionQuery<RElement, RO: ReductionOp<RElement>> {
 }
 
 struct SegmentReductionQuery<RElement, RO: ReductionOp<RElement>> {
-	segment: Range<usize>,
-	_t: std::marker::PhantomData<RElement>
+	segment: Range<usize>
 }
 
 
@@ -64,6 +63,19 @@ trait SegmentModifier<RElement, MD: ModificationDescriptor<RElement>> {
 	fn modify_segment(&mut self, q: SegmentModificationQuery<RElement, MD>);
 }
 
+impl<
+	RElement,
+	MD: ModificationDescriptor<RElement>,
+	Answerer: SegmentModifier<RElement, MD>
+> ElementModifier<RElement, MD> for Answerer {
+	fn modify_element(&mut self, q: ElementModificationQuery<RElement, MD>) {
+		self.modify_segment(SegmentModificationQuery::<RElement, MD>{
+			segment: q.position..q.position + 1,
+			mqd: q.mqd,
+		})
+	}
+}
+
 trait ElementReducer<RElement, RO: ReductionOp<RElement>> {
 	fn reduce_element(&mut self, q: ElementReductionQuery<RElement, RO>);
 }
@@ -71,6 +83,21 @@ trait ElementReducer<RElement, RO: ReductionOp<RElement>> {
 trait SegmentReducer<RElement, RO: ReductionOp<RElement>> {
 	fn reduce_segment(&mut self, q: SegmentReductionQuery<RElement, RO>);
 }
+
+
+impl<
+	RElement,
+	RO: ReductionOp<RElement>,
+	Answerer: SegmentReducer<RElement, RO>
+> ElementReducer<RElement, RO> for Answerer {
+
+	fn reduce_element(&mut self, q: ElementReductionQuery<RElement, RO>) {
+		self.modify_segment(SegmentReductionQuery::<RElement, RO>{
+			segment: q.position..q.position + 1,
+		})
+	}
+}
+
 
 ///_____________________________________________________________________________
 
@@ -90,7 +117,6 @@ struct MassReadSegmentTree<
 	RO: ReductionOp<RElement>
 > {
 	e: SegmentTreeEngine<RElement>,
-	_t: PhantomData<RO>
 }
 
 impl<
@@ -101,7 +127,6 @@ impl<
 	fn default() -> Self {
 		MassReadSegmentTree {
 			e: SegmentTreeEngine{data:Vec::new()},
-			_t: Default::default()
 		}
 	}
 }
