@@ -65,6 +65,8 @@ trait SegmentModifier<RElement, MD: ModificationDescriptor<RElement>> {
 	fn modify_segment(&mut self, q: SegmentModificationQuery<RElement, MD>);
 }
 
+// TODO: have front-end and back-end traits: every type only implements itself one of
+// TODO: Segment or query, but for frontend segment one also implements element one
 // impl<
 // 	RElement,
 // 	MD: ModificationDescriptor<RElement>,
