@@ -128,6 +128,26 @@ impl<
 	// }
 }
 
+impl<
+	RElement,
+	MD: ModificationDescriptor<RElement>,
+	RO: ReductionOp<RElement>
+> ElementModifier<RElement, MD> for MassReadSegmentTree<RElement, MD, RO> {
+	fn modify_element(&mut self, q: ElementModificationQuery<RElement, MD>) {
+		todo!()
+	}
+}
+
+impl<
+	RElement,
+	MD: ModificationDescriptor<RElement>,
+	RO: ReductionOp<RElement>
+> SegmentReducer<RElement, RO> for MassReadSegmentTree<RElement, MD, RO> {
+	fn reduce_segment(&mut self, q: SegmentReductionQuery<RElement, MD>) {
+		todo!()
+	}
+}
+
 /// _____________________________________________________________________________
 
 trait ComposableModificationDescriptor<RElement>: ModificationDescriptor<RElement> {
