@@ -27,35 +27,49 @@ impl<T: From<i64> + Add<Output=T>> ReductionOp<T> for SumReduction<T> {
 
 ///_____________________________________________________________________________
 
-trait ModificationQuery<RElement> {}
-trait ReductionQuery<RElement> {}
+trait ModificationDescriptor<RElement> {}
 
-struct ElementModificationQuery<RElement> {
+
+// trait ModificationQuery<RElement> {}
+// trait ReductionQuery<RElement> {}
+
+struct ElementModificationQuery<RElement, MD: ModificationDescriptor<RElement>> {
 	position: usize,
-	new_element: RElement,
+	mqd: MD,
 }
 
 // impl<RElement> ModificationQuery for ElementModificationQuery<RElement> {}
 
-struct SegmentModificationQuery<RElement> {
+struct SegmentModificationQuery<RElement, MD: ModificationDescriptor<RElement>> {
 	segment: Range<usize>,
-	new_element: RElement,
+	mqd: MD,
 }
 
 
-struct ElementReductionQuery<RElement> {
+struct ElementReductionQuery<RElement, RO: ReductionOp<RElement>> {
 	element_index: usize,
-	_t: std::marker::PhantomData<RElement>
 }
 
-struct SegmentReductionQuery<RElement> {
+struct SegmentReductionQuery<RElement, RO: ReductionOp<RElement>> {
 	segment: Range<usize>,
 	_t: std::marker::PhantomData<RElement>
 }
 
 
-trait SegmentTree<RElement, MQ: ModificationQuery<RElement>, RQ: ReductionQuery<RElement>> {
+trait ElementModifier<RElement, MD: ModificationDescriptor<RElement>> {
+	fn modify_element(&mut self, q: ElementModificationQuery<RElement, MD>);
+}
 
+trait SegmentModifier<RElement, MD: ModificationDescriptor<RElement>> {
+	fn modify_segment(&mut self, q: SegmentModificationQuery<RElement, MD>);
+}
+
+trait ElementReducer<RElement, RO: ReductionOp<RElement>> {
+	fn reduce_element(&mut self, q: ElementReductionQuery<RElement, RO>);
+}
+
+trait SegmentReducer<RElement, RO: ReductionOp<RElement>> {
+	fn reduce_segment(&mut self, q: SegmentReductionQuery<RElement, RO>);
 }
 
 ///_____________________________________________________________________________
@@ -70,12 +84,20 @@ impl<RElement> SegmentTreeEngine<RElement> {
 
 /// _____________________________________________________________________________
 
-struct MassReadSegmentTree<RElement, RQ: ReductionOp<RElement>> {
+struct MassReadSegmentTree<
+	RElement,
+	MD: ModificationDescriptor<RElement>,
+	RO: ReductionOp<RElement>
+> {
 	e: SegmentTreeEngine<RElement>,
-	_t: PhantomData<RQ>
+	_t: PhantomData<RO>
 }
 
-impl<RElement, RQ: ReductionOp<RElement>> Default for MassReadSegmentTree<RElement, RQ> {
+impl<
+	RElement,
+	MD: ModificationDescriptor<RElement>,
+	RO: ReductionOp<RElement>
+> Default for MassReadSegmentTree<RElement, MD, RO> {
 	fn default() -> Self {
 		MassReadSegmentTree {
 			e: SegmentTreeEngine{data:Vec::new()},
@@ -84,7 +106,11 @@ impl<RElement, RQ: ReductionOp<RElement>> Default for MassReadSegmentTree<REleme
 	}
 }
 
-impl<RElement, RQ: ReductionOp<RElement>> MassReadSegmentTree<RElement, RQ> {
+impl<
+	RElement,
+	MD: ModificationDescriptor<RElement>,
+	RO: ReductionOp<RElement>
+> MassReadSegmentTree<RElement, MD, RO> {
 	fn fill_neutral(n: usize) -> Self {
 		todo!()
 	}
@@ -93,18 +119,18 @@ impl<RElement, RQ: ReductionOp<RElement>> MassReadSegmentTree<RElement, RQ> {
 		todo!()
 	}
 
-	fn modify_element(q: ElementReductionQuery<RElement>) {
-		todo!()
-	}
-
-	fn reduce(q: SegmentReductionQuery<RElement>) -> RElement {
-		todo!()
-	}
+	// fn modify_element(q: ElementReductionQuery<RElement>) {
+	// 	todo!()
+	// }
+	//
+	// fn reduce(q: SegmentReductionQuery<RElement, RO>) -> RElement {
+	// 	todo!()
+	// }
 }
 
 /// _____________________________________________________________________________
 
-trait ComposableModificationQuery<RElement>: ModificationQuery<RElement> {
+trait ComposableModificationDescriptor<RElement>: ModificationDescriptor<RElement> {
 	fn compose(old: &Self, new: &Self) -> Self;
 }
 
