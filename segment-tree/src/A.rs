@@ -131,6 +131,12 @@ impl<RE, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
 			})
 	}
 
+	fn initial_data_start(tree_size: usize) -> usize {
+		assert!(tree_size.is_power_of_two());
+
+		tree_size
+	}
+
 	fn fill_neutral(n: usize) -> Self {
 		todo!()
 	}
@@ -180,14 +186,32 @@ impl<
 	MD: ModificationDescriptor<RE>,
 	RO: ReductionOp<RE>
 > MassReadSegmentTree<RE, MD, RO> {
-	fn fill_neutral(n: usize) -> Self {
+	pub fn fill_neutral(n: usize) -> Self {
 		MassReadSegmentTree {
 			data: vec![RO::neutral(); SegmentTreeEngine::smallest_pow_of_two_size(n)]
 		}
 	}
 
-	fn build(initial_data: Vec<usize>) -> Self {
-		todo!()
+	fn reduce_node(&mut self, parent_index: usize) {
+		self.data[parent_index] = RO::apply(
+			self.data[SegmentTreeEngine::left_child(parent_index)].clone(),
+			self.data[SegmentTreeEngine::right_child(parent_index)].clone()
+		);
+	}
+
+	pub fn build(initial_data: Vec<usize>) -> Self {
+		let mut res = Self::fill_neutral(initial_data.len());
+		let data_start = SegmentTreeEngine::initial_data_start(res.size());
+
+		let to_copy = (&mut res.data[data_start..data_start + initial_data.len()]);
+
+		to_copy.iter_mut()
+			.zip(initial_data.iter())
+			.map(|(tree_ptr, data_ptr)| *tree_ptr = *data_ptr);
+
+		todo!();
+
+		res
 	}
 }
 
