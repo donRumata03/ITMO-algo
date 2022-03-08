@@ -1,7 +1,7 @@
 use super::*;
 
 
-struct MassReadWriteSegmentTree<
+pub struct MassReadWriteSegmentTree<
     RE: ReductionElement,
     MD: ComposableModificationDescriptor<RE>,
     RO: ReductionOp<RE>

@@ -33,6 +33,15 @@ mod segment_tree;
 
 
 fn main() {
+    println!("Hello!");
 
+    let tree =
+        segment_tree::MassReadSegmentTree::<
+            i64,
+            crate::segment_tree::AssignmentModification<i64>,
+            crate::segment_tree::SumReduction<i64>
+        >::build(vec![1, 2, 3]);
+
+    assert_eq!(tree.data, vec![6, 3, 3, 1, 2, 3, 0]);
 }
 

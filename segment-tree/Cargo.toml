@@ -11,4 +11,6 @@ name = "A"
 
 [dependencies]
 
-
+[profile.dev]
+opt-level = 0               # Use slightly better optimizations.
+overflow-checks = true

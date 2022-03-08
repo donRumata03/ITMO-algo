@@ -13,6 +13,16 @@ impl<T: From<i64> + Add<Output=T> + ReductionElement> ReductionOp<T> for SumRedu
     }
 }
 
+pub struct AssignmentModification<RE: ReductionElement> {
+    assigned_value: RE
+}
+
+impl<RE: ReductionElement> ModificationDescriptor<RE> for AssignmentModification<RE> {
+    fn apply(&self, _argument: RE) -> RE {
+        self.assigned_value.clone()
+    }
+}
+
 ///
 pub enum SegmentAdditionAssignment {
     Addition(i64),

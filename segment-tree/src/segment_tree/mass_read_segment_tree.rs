@@ -1,11 +1,11 @@
 use super::*;
 
-struct MassReadSegmentTree<
+pub struct MassReadSegmentTree<
     RE: ReductionElement,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > {
-    data: Vec<RE>,
+    pub(crate) data: Vec<RE>,
     _m: PhantomData<MD>,
     _r: PhantomData<RO>,
 }
@@ -89,9 +89,18 @@ impl<
 
 #[cfg(test)]
 mod tests {
+    use crate::segment_tree::mass_read_segment_tree::MassReadSegmentTree;
+    use crate::segment_tree::{AssignmentModification, SumReduction};
 
     #[test]
     fn test_building() {
-        println!("Hello, world!");
+        let tree =
+            MassReadSegmentTree::<
+                i64,
+                AssignmentModification<i64>,
+                SumReduction<i64>
+            >::build(vec![1, 2, 3]);
+
+        assert_eq!(tree.data, vec![6, 3, 3, 1, 2, 3, 0]);
     }
 }
