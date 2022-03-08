@@ -25,39 +25,40 @@ impl<
 
     pub fn fill_neutral(n: usize) -> Self {
         Self::with_data(
-            vec![RO::neutral(); SegmentTreeEngine::smallest_pow_of_two_size(n)]
+            vec![RO::neutral(); SegmentTreeEngine::<RE, RO>::smallest_pow_of_two_size(n)]
         )
     }
 
     fn reduce_node(&mut self, parent_index: usize) {
         self.data[parent_index] = RO::apply(
-            self.data[SegmentTreeEngine::left_child(parent_index)].clone(),
-            self.data[SegmentTreeEngine::right_child(parent_index)].clone()
+            self.data[SegmentTreeEngine::<RE, RO>::left_child(parent_index)].clone(),
+            self.data[SegmentTreeEngine::<RE, RO>::right_child(parent_index)].clone()
         );
     }
 
     fn is_floor_node(&self, node_index: usize) -> bool {
-        node_index >= SegmentTreeEngine::floor_start(self.data.len())
+        node_index >= SegmentTreeEngine::<RE, RO>::floor_start(self.data.len())
     }
 
     fn down_recursive_update_node_reductions(&mut self, root: usize) {
         if !self.is_floor_node(root) {
-            self.down_recursive_update_node_reductions(SegmentTreeEngine::left_child(root));
-            self.down_recursive_update_node_reductions(SegmentTreeEngine::right_child(root));
+            self.down_recursive_update_node_reductions(SegmentTreeEngine::<RE, RO>::left_child(root));
+            self.down_recursive_update_node_reductions(SegmentTreeEngine::<RE, RO>::right_child(root));
 
             self.reduce_node(root);
         }
     }
 
-    pub fn build(initial_data: Vec<usize>) -> Self {
+    pub fn build(initial_data: Vec<RE>) -> Self {
         let mut res = Self::fill_neutral(initial_data.len());
-        let data_start = SegmentTreeEngine::floor_start(res.size());
+        let data_start = SegmentTreeEngine::<RE, RO>::floor_start(res.data.len());
 
-        let to_copy = (&mut res.data[data_start..data_start + initial_data.len()]);
+        let to_copy = &mut res.data[data_start..data_start + initial_data.len()];
 
         to_copy.iter_mut()
             .zip(initial_data.iter())
-            .map(|(tree_ptr, data_ptr)| *tree_ptr = *data_ptr);
+            .for_each(|(tree_ptr, data_ptr)| *tree_ptr = data_ptr.clone())
+        ;
 
         res.down_recursive_update_node_reductions(0);
 

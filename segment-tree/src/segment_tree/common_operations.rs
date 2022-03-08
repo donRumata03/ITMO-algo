@@ -24,8 +24,8 @@ impl ReductionElement for i64 {}
 impl ModificationDescriptor<i64> for SegmentAdditionAssignment {
     fn apply(&self, argument: i64) -> i64 {
         match self {
-            Self::Addition(&v) => argument + v,
-            Self::Assignment(&v) => v,
+            Self::Addition(v) => argument + *v,
+            Self::Assignment(v) => *v,
         }
     }
 }
