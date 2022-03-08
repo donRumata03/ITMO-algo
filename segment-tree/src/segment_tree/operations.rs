@@ -1,51 +1,60 @@
 use super::*;
 
+pub trait ReductionElement: Clone {
 
-pub trait ReductionOp<T> {
+}
+
+pub trait ReductionOp<T: ReductionElement> {
     fn neutral() -> T;
     fn apply(left: T, right: T) -> T;
 }
 
-pub trait CommutativeOp<T>: ReductionOp<T> {}
-pub trait DistributiveRelativeTo<T>: ReductionOp<T> {}
+pub trait CommutativeOp<T: ReductionElement>: ReductionOp<T> {}
+pub trait DistributiveRelativeTo<T: ReductionElement>: ReductionOp<T> {}
 
 
 
 ///_____________________________________________________________________________
 
 /// Type that represents set of possible modifications of elements
-pub trait ModificationDescriptor<RE> {
+pub trait ModificationDescriptor<RE: ReductionElement> {
     fn apply(&self, argument: RE) -> RE;
 }
 
 /// Different kinds of queries { modification, reduction } × { segment, element }
-pub struct ElementModificationQuery<RE, MD: ModificationDescriptor<RE>> {
+pub struct ElementModificationQuery<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
     position: usize,
     mqd: MD,
+    _re: PhantomData<RE>
 }
 
 // impl<RE> ModificationQuery for ElementModificationQuery<RE> {}
 
-pub struct SegmentModificationQuery<RE, MD: ModificationDescriptor<RE>> {
+pub struct SegmentModificationQuery<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
     segment: Range<usize>,
     mqd: MD,
+    _re: PhantomData<RE>
 }
 
 
-pub struct ElementReductionQuery<RE, RO: ReductionOp<RE>> {
+pub struct ElementReductionQuery<RE: ReductionElement, RO: ReductionOp<RE>> {
     element_index: usize,
+    _re: PhantomData<RE>,
+    _ro: PhantomData<RO>
 }
 
-pub struct SegmentReductionQuery<RE, RO: ReductionOp<RE>> {
-    segment: Range<usize>
+pub struct SegmentReductionQuery<RE: ReductionElement, RO: ReductionOp<RE>> {
+    segment: Range<usize>,
+    _re: PhantomData<RE>,
+    _ro: PhantomData<RO>
 }
 
 /// Traits for a data structure answering different type of queries
-pub trait ElementModifier<RE, MD: ModificationDescriptor<RE>> {
+pub trait ElementModifier<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
     fn modify_element(&mut self, q: ElementModificationQuery<RE, MD>);
 }
 
-pub trait SegmentModifier<RE, MD: ModificationDescriptor<RE>> {
+pub trait SegmentModifier<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
     fn modify_segment(&mut self, q: SegmentModificationQuery<RE, MD>);
 }
 
@@ -64,11 +73,11 @@ pub trait SegmentModifier<RE, MD: ModificationDescriptor<RE>> {
 // 	}
 // }
 
-pub trait ElementReducer<RE, RO: ReductionOp<RE>> {
+pub trait ElementReducer<RE: ReductionElement, RO: ReductionOp<RE>> {
     fn reduce_element(&mut self, q: ElementReductionQuery<RE, RO>);
 }
 
-pub trait SegmentReducer<RE, RO: ReductionOp<RE>> {
+pub trait SegmentReducer<RE: ReductionElement, RO: ReductionOp<RE>> {
     fn reduce_segment(&mut self, q: SegmentReductionQuery<RE, RO>);
 }
 
@@ -89,11 +98,11 @@ pub trait SegmentReducer<RE, RO: ReductionOp<RE>> {
 
 /// Composition and recounting (for both reduction and modification on segment)
 
-pub trait ComposableModificationDescriptor<RE>: ModificationDescriptor<RE> {
+pub trait ComposableModificationDescriptor<RE: ReductionElement>: ModificationDescriptor<RE> {
     fn compose(old: &Self, new: &Self) -> Self;
 }
 
 
-pub trait RecountableAfterMassApplication<RE, MD: ModificationDescriptor<RE>> {
+pub trait RecountableAfterMassApplication<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
     fn recount(reduction_element: &mut RE, query: MD, len: usize);
 }

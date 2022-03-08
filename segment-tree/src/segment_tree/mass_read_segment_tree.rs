@@ -1,7 +1,7 @@
 use super::*;
 
 struct MassReadSegmentTree<
-    RE,
+    RE: ReductionElement,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > {
@@ -11,13 +11,13 @@ struct MassReadSegmentTree<
 }
 
 impl<
-    RE,
+    RE: ReductionElement,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > MassReadSegmentTree<RE, MD, RO> {
-    fn with_data(data: Vec<RO>) -> MassReadSegmentTree<RE, MD, RO> {
+    fn with_data(data: Vec<RE>) -> MassReadSegmentTree<RE, MD, RO> {
         Self {
-            data,
+            data: data,
             _m: Default::default(),
             _r: Default::default(),
         }
@@ -66,7 +66,7 @@ impl<
 }
 
 impl<
-    RE,
+    RE: ReductionElement,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > ElementModifier<RE, MD> for MassReadSegmentTree<RE, MD, RO> {
@@ -76,11 +76,21 @@ impl<
 }
 
 impl<
-    RE,
+    RE: ReductionElement,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > SegmentReducer<RE, RO> for MassReadSegmentTree<RE, MD, RO> {
     fn reduce_segment(&mut self, q: SegmentReductionQuery<RE, RO>) {
         todo!()
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_building() {
+        println!("Hello, world!");
     }
 }

@@ -3,7 +3,7 @@ use super::*;
 
 pub struct SumReduction<T: From<i64> + Add<Output=T>> { _t: PhantomData<T> }
 
-impl<T: From<i64> + Add<Output=T>> ReductionOp<T> for SumReduction<T> {
+impl<T: From<i64> + Add<Output=T> + ReductionElement> ReductionOp<T> for SumReduction<T> {
     fn neutral() -> T {
         1.into()
     }
@@ -13,11 +13,13 @@ impl<T: From<i64> + Add<Output=T>> ReductionOp<T> for SumReduction<T> {
     }
 }
 
-/// 
+///
 pub enum SegmentAdditionAssignment {
     Addition(i64),
     Assignment(i64)
 }
+
+impl ReductionElement for i64 {}
 
 impl ModificationDescriptor<i64> for SegmentAdditionAssignment {
     fn apply(&self, argument: i64) -> i64 {

@@ -16,11 +16,12 @@ pub struct NodeDescriptor {
 
 
 
-pub struct SegmentTreeEngine<RE, RO: ReductionOp<RE>> {
-    data: Vec<RE>
+pub struct SegmentTreeEngine<RE: ReductionElement, RO: ReductionOp<RE>> {
+    data: Vec<RE>,
+    _rp: PhantomData<RO>
 }
 
-impl<RE, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
+impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
     pub(crate) fn left_child(i: usize) -> usize {
         2 * i + 1
     }
