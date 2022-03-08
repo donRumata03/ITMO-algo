@@ -27,76 +27,76 @@ impl<T: From<i64> + Add<Output=T>> ReductionOp<T> for SumReduction<T> {
 
 ///_____________________________________________________________________________
 
-trait ModificationDescriptor<RElement> {
-	fn apply(&self, argument: RElement) -> RElement;
+trait ModificationDescriptor<RE> {
+	fn apply(&self, argument: RE) -> RE;
 }
 
 
-// trait ModificationQuery<RElement> {}
-// trait ReductionQuery<RElement> {}
+// trait ModificationQuery<RE> {}
+// trait ReductionQuery<RE> {}
 
-struct ElementModificationQuery<RElement, MD: ModificationDescriptor<RElement>> {
+struct ElementModificationQuery<RE, MD: ModificationDescriptor<RE>> {
 	position: usize,
 	mqd: MD,
 }
 
-// impl<RElement> ModificationQuery for ElementModificationQuery<RElement> {}
+// impl<RE> ModificationQuery for ElementModificationQuery<RE> {}
 
-struct SegmentModificationQuery<RElement, MD: ModificationDescriptor<RElement>> {
+struct SegmentModificationQuery<RE, MD: ModificationDescriptor<RE>> {
 	segment: Range<usize>,
 	mqd: MD,
 }
 
 
-struct ElementReductionQuery<RElement, RO: ReductionOp<RElement>> {
+struct ElementReductionQuery<RE, RO: ReductionOp<RE>> {
 	element_index: usize,
 }
 
-struct SegmentReductionQuery<RElement, RO: ReductionOp<RElement>> {
+struct SegmentReductionQuery<RE, RO: ReductionOp<RE>> {
 	segment: Range<usize>
 }
 
 
-trait ElementModifier<RElement, MD: ModificationDescriptor<RElement>> {
-	fn modify_element(&mut self, q: ElementModificationQuery<RElement, MD>);
+trait ElementModifier<RE, MD: ModificationDescriptor<RE>> {
+	fn modify_element(&mut self, q: ElementModificationQuery<RE, MD>);
 }
 
-trait SegmentModifier<RElement, MD: ModificationDescriptor<RElement>> {
-	fn modify_segment(&mut self, q: SegmentModificationQuery<RElement, MD>);
+trait SegmentModifier<RE, MD: ModificationDescriptor<RE>> {
+	fn modify_segment(&mut self, q: SegmentModificationQuery<RE, MD>);
 }
 
 // TODO: have front-end and back-end traits: every type only implements itself one of
 // TODO: Segment or query, but for frontend segment one also implements element one
 // impl<
-// 	RElement,
-// 	MD: ModificationDescriptor<RElement>,
-// 	Answerer: SegmentModifier<RElement, MD>
-// > ElementModifier<RElement, MD> for Answerer {
-// 	fn modify_element(&mut self, q: ElementModificationQuery<RElement, MD>) {
-// 		self.modify_segment(SegmentModificationQuery::<RElement, MD>{
+// 	RE,
+// 	MD: ModificationDescriptor<RE>,
+// 	Answerer: SegmentModifier<RE, MD>
+// > ElementModifier<RE, MD> for Answerer {
+// 	fn modify_element(&mut self, q: ElementModificationQuery<RE, MD>) {
+// 		self.modify_segment(SegmentModificationQuery::<RE, MD>{
 // 			segment: q.position..q.position + 1,
 // 			mqd: q.mqd,
 // 		})
 // 	}
 // }
 
-trait ElementReducer<RElement, RO: ReductionOp<RElement>> {
-	fn reduce_element(&mut self, q: ElementReductionQuery<RElement, RO>);
+trait ElementReducer<RE, RO: ReductionOp<RE>> {
+	fn reduce_element(&mut self, q: ElementReductionQuery<RE, RO>);
 }
 
-trait SegmentReducer<RElement, RO: ReductionOp<RElement>> {
-	fn reduce_segment(&mut self, q: SegmentReductionQuery<RElement, RO>);
+trait SegmentReducer<RE, RO: ReductionOp<RE>> {
+	fn reduce_segment(&mut self, q: SegmentReductionQuery<RE, RO>);
 }
 
 
 // impl<
-// 	RElement,
-// 	RO: ReductionOp<RElement>,
-// 	Answerer: SegmentReducer<RElement, RO>
-// > ElementReducer<RElement, RO> for Answerer {
+// 	RE,
+// 	RO: ReductionOp<RE>,
+// 	Answerer: SegmentReducer<RE, RO>
+// > ElementReducer<RE, RO> for Answerer {
 //
-// 	fn reduce_element(&mut self, q: ElementReductionQuery<RElement, RO>) {
-// 		self.modify_segment(SegmentReductionQuery::<RElement, RO>{
+// 	fn reduce_element(&mut self, q: ElementReductionQuery<RE, RO>) {
+// 		self.modify_segment(SegmentReductionQuery::<RE, RO>{
 // 			segment: q.position..q.position + 1,
 // 		})
 // 	}
@@ -105,11 +105,11 @@ trait SegmentReducer<RElement, RO: ReductionOp<RElement>> {
 
 ///_____________________________________________________________________________
 
-struct SegmentTreeEngine<RElement, RO: ReductionOp<RElement>> {
-	data: Vec<RElement>
+struct SegmentTreeEngine<RE, RO: ReductionOp<RE>> {
+	data: Vec<RE>
 }
 
-impl<RElement, RO: ReductionOp<RElement>> SegmentTreeEngine<RElement, RO> {
+impl<RE, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
 	fn left_child(i: usize) -> usize {
 		2 * i + 1
 	}
@@ -138,33 +138,51 @@ impl<RElement, RO: ReductionOp<RElement>> SegmentTreeEngine<RElement, RO> {
 
 /// _____________________________________________________________________________
 
+fn msb(value: usize) -> Option<usize> {
+	let z = value.leading_zeros();
+
+	if z == 64 { None }
+	else { Some(63 - z as usize) }
+}
+
+/// _____________________________________________________________________________
+
 struct MassReadSegmentTree<
-	RElement,
-	MD: ModificationDescriptor<RElement>,
-	RO: ReductionOp<RElement>
+	RE,
+	MD: ModificationDescriptor<RE>,
+	RO: ReductionOp<RE>
 > {
-	e: SegmentTreeEngine<RElement>,
+	data: Vec<RE>,
 }
 
 impl<
-	RElement,
-	MD: ModificationDescriptor<RElement>,
-	RO: ReductionOp<RElement>
-> Default for MassReadSegmentTree<RElement, MD, RO> {
+	RE,
+	MD: ModificationDescriptor<RE>,
+	RO: ReductionOp<RE>
+> Default for MassReadSegmentTree<RE, MD, RO> {
 	fn default() -> Self {
 		MassReadSegmentTree {
-			e: SegmentTreeEngine{data:Vec::new()},
+			data: Vec::new(),
 		}
 	}
 }
 
 impl<
-	RElement,
-	MD: ModificationDescriptor<RElement>,
-	RO: ReductionOp<RElement>
-> MassReadSegmentTree<RElement, MD, RO> {
+	RE,
+	MD: ModificationDescriptor<RE>,
+	RO: ReductionOp<RE>
+> MassReadSegmentTree<RE, MD, RO> {
 	fn fill_neutral(n: usize) -> Self {
-		todo!()
+		let size = msb(n)
+			.map_or(0, |b| {
+				if 2usize.pow(b as u32) == n {
+					b
+				} else { b + 1 }
+			});
+
+	 	MassReadSegmentTree {
+			data: vec![RO::neutral(); size]
+		}
 	}
 
 	fn build(initial_data: Vec<usize>) -> Self {
@@ -173,34 +191,34 @@ impl<
 }
 
 impl<
-	RElement,
-	MD: ModificationDescriptor<RElement>,
-	RO: ReductionOp<RElement>
-> ElementModifier<RElement, MD> for MassReadSegmentTree<RElement, MD, RO> {
-	fn modify_element(&mut self, q: ElementModificationQuery<RElement, MD>) {
+	RE,
+	MD: ModificationDescriptor<RE>,
+	RO: ReductionOp<RE>
+> ElementModifier<RE, MD> for MassReadSegmentTree<RE, MD, RO> {
+	fn modify_element(&mut self, q: ElementModificationQuery<RE, MD>) {
 		todo!()
 	}
 }
 
 impl<
-	RElement,
-	MD: ModificationDescriptor<RElement>,
-	RO: ReductionOp<RElement>
-> SegmentReducer<RElement, RO> for MassReadSegmentTree<RElement, MD, RO> {
-	fn reduce_segment(&mut self, q: SegmentReductionQuery<RElement, RO>) {
+	RE,
+	MD: ModificationDescriptor<RE>,
+	RO: ReductionOp<RE>
+> SegmentReducer<RE, RO> for MassReadSegmentTree<RE, MD, RO> {
+	fn reduce_segment(&mut self, q: SegmentReductionQuery<RE, RO>) {
 		todo!()
 	}
 }
 
 /// _____________________________________________________________________________
 
-trait ComposableModificationDescriptor<RElement>: ModificationDescriptor<RElement> {
+trait ComposableModificationDescriptor<RE>: ModificationDescriptor<RE> {
 	fn compose(old: &Self, new: &Self) -> Self;
 }
 
 
-trait RecountableAfterMassApplication<RElement, MD: ModificationDescriptor<RElement>> {
-	fn recount(reduction_element: &mut RElement, query: MD, len: usize);
+trait RecountableAfterMassApplication<RE, MD: ModificationDescriptor<RE>> {
+	fn recount(reduction_element: &mut RE, query: MD, len: usize);
 }
 
 enum SegmentAdditionAssignment {
@@ -263,33 +281,33 @@ impl RecountableAfterMassApplication<i64, SegmentAdditionAssignment> for MinRedu
 /// _____________________________________________________________________________
 
 struct MassReadWriteSegmentTree<
-	RElement,
-	MD: ComposableModificationDescriptor<RElement>,
-	RO: ReductionOp<RElement>
-> where RO: RecountableAfterMassApplication<RElement, MD> {
-	e: SegmentTreeEngine<RElement>,
+	RE,
+	MD: ComposableModificationDescriptor<RE>,
+	RO: ReductionOp<RE>
+> where RO: RecountableAfterMassApplication<RE, MD> {
+	e: SegmentTreeEngine<RE>,
 }
 
 impl<
-	RElement,
-	MD: ComposableModificationDescriptor<RElement>,
-	RO: ReductionOp<RElement>
-> SegmentModifier<RElement, MD> for MassReadWriteSegmentTree<RElement, MD, RO>
-	where RO: RecountableAfterMassApplication<RElement, MD>
+	RE,
+	MD: ComposableModificationDescriptor<RE>,
+	RO: ReductionOp<RE>
+> SegmentModifier<RE, MD> for MassReadWriteSegmentTree<RE, MD, RO>
+	where RO: RecountableAfterMassApplication<RE, MD>
 {
-	fn modify_segment(&mut self, q: ElementModificationQuery<RElement, MD>) {
+	fn modify_segment(&mut self, q: ElementModificationQuery<RE, MD>) {
 		todo!()
 	}
 }
 
 impl<
-	RElement,
-	MD: ComposableModificationDescriptor<RElement>,
-	RO: ReductionOp<RElement>
-> SegmentReducer<RElement, RO> for MassReadWriteSegmentTree<RElement, MD, RO>
-	where RO: RecountableAfterMassApplication<RElement, MD>
+	RE,
+	MD: ComposableModificationDescriptor<RE>,
+	RO: ReductionOp<RE>
+> SegmentReducer<RE, RO> for MassReadWriteSegmentTree<RE, MD, RO>
+	where RO: RecountableAfterMassApplication<RE, MD>
 {
-	fn reduce_segment(&mut self, q: SegmentReductionQuery<RElement, RO>) {
+	fn reduce_segment(&mut self, q: SegmentReductionQuery<RE, RO>) {
 		todo!()
 	}
 }
