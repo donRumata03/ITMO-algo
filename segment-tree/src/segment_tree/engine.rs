@@ -37,16 +37,16 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
     pub(crate) fn smallest_pow_of_two_size(n: usize) -> usize {
         msb(n)
             .map_or(0, |b| {
-                if 2usize.pow(b as u32) == n {
+                2_usize.pow(if 2usize.pow(b as u32) == n {
                     b
                 } else { b + 1 }
-            })
+             as u32 + 1)})
     }
 
     pub(crate) fn floor_start(tree_size: usize) -> usize {
         assert!(tree_size.is_power_of_two());
 
-        tree_size
+        tree_size / 2
     }
 
     fn fill_neutral(n: usize) -> Self {

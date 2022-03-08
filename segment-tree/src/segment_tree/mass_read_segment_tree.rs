@@ -42,6 +42,7 @@ impl<
 
     fn down_recursive_update_node_reductions(&mut self, root: usize) {
         if !self.is_floor_node(root) {
+            println!("{}, {}", root, left);
             self.down_recursive_update_node_reductions(SegmentTreeEngine::<RE, RO>::left_child(root));
             self.down_recursive_update_node_reductions(SegmentTreeEngine::<RE, RO>::right_child(root));
 
