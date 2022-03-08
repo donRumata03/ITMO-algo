@@ -122,6 +122,14 @@ impl<RE, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
 		(i - 1) / 2
 	}
 
+	fn smallest_pow_of_two_size(n: usize) -> usize {
+		msb(n)
+			.map_or(0, |b| {
+				if 2usize.pow(b as u32) == n {
+					b
+				} else { b + 1 }
+			})
+	}
 
 	fn fill_neutral(n: usize) -> Self {
 		todo!()
@@ -173,15 +181,8 @@ impl<
 	RO: ReductionOp<RE>
 > MassReadSegmentTree<RE, MD, RO> {
 	fn fill_neutral(n: usize) -> Self {
-		let size = msb(n)
-			.map_or(0, |b| {
-				if 2usize.pow(b as u32) == n {
-					b
-				} else { b + 1 }
-			});
-
-	 	MassReadSegmentTree {
-			data: vec![RO::neutral(); size]
+		MassReadSegmentTree {
+			data: vec![RO::neutral(); SegmentTreeEngine::smallest_pow_of_two_size(n)]
 		}
 	}
 
