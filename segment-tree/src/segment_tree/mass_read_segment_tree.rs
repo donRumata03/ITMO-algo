@@ -57,10 +57,7 @@ impl<
 
         let to_copy = &mut res.data[data_start..data_start + initial_data.len()];
 
-        to_copy.iter_mut()
-            .zip(initial_data.iter())
-            .for_each(|(tree_ptr, data_ptr)| *tree_ptr = data_ptr.clone())
-        ;
+        to_copy.clone_from_slice(&initial_data);
 
         res.down_recursive_update_node_reductions(0);
 
