@@ -11,11 +11,18 @@ pub struct MassReadSegmentTree<
     _r: PhantomData<RO>,
 }
 
+/// Private impls
 impl<
     RE: ReductionElement + Debug,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > MassReadSegmentTree<RE, MD, RO> {
+    pub fn fill_neutral(n: usize) -> Self {
+        Self::with_data(
+            vec![RO::neutral(); SegmentTreeEngine::<RE, RO>::smallest_pow_of_two_size(n)]
+        )
+    }
+
     fn with_data(data: Vec<RE>) -> MassReadSegmentTree<RE, MD, RO> {
         Self {
             data: data,
@@ -24,11 +31,6 @@ impl<
         }
     }
 
-    pub fn fill_neutral(n: usize) -> Self {
-        Self::with_data(
-            vec![RO::neutral(); SegmentTreeEngine::<RE, RO>::smallest_pow_of_two_size(n)]
-        )
-    }
 
     fn reduce_node(&mut self, parent_index: usize) {
         self.data[parent_index] = RO::apply(
@@ -51,6 +53,23 @@ impl<
         }
     }
 
+
+    fn modify_element_impl(&mut self, q: ElementModificationQuery<RE, MD>) {
+
+    }
+
+    fn reduce_segment_impl(&mut self, q: SegmentReductionQuery<RE, RO>) {
+        todo!()
+    }
+}
+
+
+/// Public ad-hoc impls
+impl<
+    RE: ReductionElement + Debug,
+    MD: ModificationDescriptor<RE>,
+    RO: ReductionOp<RE>
+> MassReadSegmentTree<RE, MD, RO> {
     pub fn build(initial_data: Vec<RE>) -> Self {
         let mut res = Self::fill_neutral(initial_data.len());
         let data_start = SegmentTreeEngine::<RE, RO>::floor_start(res.data.len());
