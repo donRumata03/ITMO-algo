@@ -43,19 +43,31 @@ impl<
         node_index >= SegmentTreeEngine::<RE, RO>::floor_start(self.data.len())
     }
 
-    fn down_recursive_update_node_reductions(&mut self, root: usize) {
+
+    fn update_node_reductions_down_from(&mut self, root: usize) {
         if !self.is_floor_node(root) {
-            println!("{}, ", root);
-            self.down_recursive_update_node_reductions(SegmentTreeEngine::<RE, RO>::left_child(root));
-            self.down_recursive_update_node_reductions(SegmentTreeEngine::<RE, RO>::right_child(root));
+            self.update_node_reductions_down_from(SegmentTreeEngine::<RE, RO>::left_child(root));
+            self.update_node_reductions_down_from(SegmentTreeEngine::<RE, RO>::right_child(root));
 
             self.reduce_node(root);
         }
     }
 
+    /// All the nodes «depending» on bottom but not bottom itself
+    fn update_node_reductions_up_from(&mut self, bottom_tree_index: usize) {
+        let parent = SegmentTreeEngine::<RE, RO>::parent(bottom_tree_index);
+        if let Some(parent) = parent {
+            self.reduce_node(parent);
+            self.update_node_reductions_up_from(parent);
+        }
+    }
+
 
     fn modify_element_impl(&mut self, q: ElementModificationQuery<RE, MD>) {
+        let tree_index = SegmentTreeEngine::<RE, RO>::initial_element_tree_index(self.data.len(), q.position);
+        self.data[tree_index] = q.mqd.apply(self.data[tree_index].clone());
 
+        self.update_node_reductions_up_from(tree_index)
     }
 
     fn reduce_segment_impl(&mut self, q: SegmentReductionQuery<RE, RO>) {
@@ -78,7 +90,7 @@ impl<
 
         to_copy.clone_from_slice(&initial_data);
 
-        res.down_recursive_update_node_reductions(0);
+        res.update_node_reductions_down_from(0);
 
         res
     }
@@ -110,15 +122,30 @@ mod tests {
     use crate::segment_tree::mass_read_segment_tree::MassReadSegmentTree;
     use crate::segment_tree::{AssignmentModification, SumReduction};
 
-    #[test]
-    fn test_building() {
+    fn verify_building(source: Vec<i64>, expected: Vec<i64>) {
         let tree =
             MassReadSegmentTree::<
                 i64,
                 AssignmentModification<i64>,
                 SumReduction<i64>
-            >::build(vec![1, 2, 3]);
+            >::build(source);
 
-        assert_eq!(tree.data, vec![6, 3, 3, 1, 2, 3, 0, 0]);
+        assert_eq!(tree.data, expected);
+
+    }
+
+    #[test]
+    fn test_building() {
+        verify_building(vec![1, 2, 3], vec![6, 3, 3, 1, 2, 3, 0, 0]);
+    }
+
+    #[test]
+    fn test_building_two() {
+        verify_building(vec![1, 2], vec![3, 1, 2, 0]);
+    }
+
+    #[test]
+    fn test_building_single() {
+        verify_building(vec![1], vec![1, 0]);
     }
 }

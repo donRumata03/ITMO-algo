@@ -61,19 +61,19 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
 		}
 	}
 
-	pub(crate) fn left_child(i: usize) -> usize {
+	pub fn left_child(i: usize) -> usize {
 		2 * i + 1
 	}
 
-	pub(crate) fn right_child(i: usize) -> usize {
+	pub fn right_child(i: usize) -> usize {
 		2 * i + 2
 	}
 
-	pub(crate) fn parent(i: usize) -> usize {
-		(i - 1) / 2
+	pub fn parent(i: usize) -> Option<usize> {
+		if i != 0 {None} else { Some((i - 1) / 2) }
 	}
 
-	pub(crate) fn smallest_pow_of_two_size(n: usize) -> usize {
+	pub fn smallest_pow_of_two_size(n: usize) -> usize { // TODO: 1. Try using 2 ^n - 1; 2. Try non-full tree with 2n elements
 		msb(n)
 			.map_or(0, |b| {
 				2_usize.pow(if 2usize.pow(b as u32) == n {
@@ -82,11 +82,15 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
 					as u32 + 1)})
 	}
 
-	pub(crate) fn floor_start(tree_size: usize) -> usize {
+	pub fn floor_start(tree_size: usize) -> usize {
 		assert!(tree_size.is_power_of_two());
-		assert!(tree_size >= 4);
+		assert!(tree_size >= 2);
 
 		tree_size / 2 - 1
+	}
+
+	pub fn initial_element_tree_index(tree_size: usize, initial_index: usize) -> usize {
+		Self::floor_start(tree_size) + initial_index
 	}
 
 	fn fill_neutral(n: usize) -> Self {

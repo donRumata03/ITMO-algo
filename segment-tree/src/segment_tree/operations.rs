@@ -23,28 +23,28 @@ pub trait ModificationDescriptor<RE: ReductionElement> {
 
 /// Different kinds of queries { modification, reduction } × { segment, element }
 pub struct ElementModificationQuery<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
-    position: usize,
-    mqd: MD,
+    pub position: usize,
+    pub mqd: MD,
     _re: PhantomData<RE>
 }
 
 // impl<RE> ModificationQuery for ElementModificationQuery<RE> {}
 
 pub struct SegmentModificationQuery<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
-    segment: Range<usize>,
-    mqd: MD,
+    pub segment: Range<usize>,
+    pub mqd: MD,
     _re: PhantomData<RE>
 }
 
 
 pub struct ElementReductionQuery<RE: ReductionElement, RO: ReductionOp<RE>> {
-    element_index: usize,
+    pub element_index: usize,
     _re: PhantomData<RE>,
     _ro: PhantomData<RO>
 }
 
 pub struct SegmentReductionQuery<RE: ReductionElement, RO: ReductionOp<RE>> {
-    segment: Range<usize>,
+    pub segment: Range<usize>,
     _re: PhantomData<RE>,
     _ro: PhantomData<RO>
 }
