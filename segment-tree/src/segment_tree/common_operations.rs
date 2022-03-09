@@ -5,7 +5,7 @@ pub struct SumReduction<T: From<i64> + Add<Output=T>> { _t: PhantomData<T> }
 
 impl<T: From<i64> + Add<Output=T> + ReductionElement> ReductionOp<T> for SumReduction<T> {
     fn neutral() -> T {
-        1.into()
+        0.into()
     }
 
     fn apply(left: T, right: T) -> T {

@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use super::*;
 
 pub struct MassReadSegmentTree<
@@ -11,7 +12,7 @@ pub struct MassReadSegmentTree<
 }
 
 impl<
-    RE: ReductionElement,
+    RE: ReductionElement + Debug,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > MassReadSegmentTree<RE, MD, RO> {
@@ -102,6 +103,6 @@ mod tests {
                 SumReduction<i64>
             >::build(vec![1, 2, 3]);
 
-        assert_eq!(tree.data, vec![6, 3, 3, 1, 2, 3, 0]);
+        assert_eq!(tree.data, vec![6, 3, 3, 1, 2, 3, 0, 0]);
     }
 }

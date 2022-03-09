@@ -38,7 +38,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
 	}
 
 	pub fn is_floor(&self, tree_index: usize) -> bool {
-		tree_index >= self.data.len() / 2
+		tree_index >= Self::floor_start(self.data.len())
 	}
 
 	pub fn node_left_child(&self, node: &NodePositionDescriptor) -> Option<NodePositionDescriptor> {
@@ -84,8 +84,9 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
 
 	pub(crate) fn floor_start(tree_size: usize) -> usize {
 		assert!(tree_size.is_power_of_two());
+		assert!(tree_size >= 4);
 
-		tree_size / 2
+		tree_size / 2 - 1
 	}
 
 	fn fill_neutral(n: usize) -> Self {
