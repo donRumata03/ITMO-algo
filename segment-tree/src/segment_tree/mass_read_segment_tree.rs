@@ -97,12 +97,12 @@ impl<
 }
 
 impl<
-    RE: ReductionElement,
+    RE: ReductionElement + Debug,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > ElementModifier<RE, MD> for MassReadSegmentTree<RE, MD, RO> {
     fn modify_element(&mut self, q: ElementModificationQuery<RE, MD>) {
-        todo!()
+        self.modify_element_impl(q);
     }
 }
 
@@ -119,33 +119,79 @@ impl<
 
 #[cfg(test)]
 mod tests {
-    use crate::segment_tree::mass_read_segment_tree::MassReadSegmentTree;
-    use crate::segment_tree::{AssignmentModification, SumReduction};
+    use crate::segment_tree::{AssignmentModification, MassReadSegmentTree, SumReduction};
 
-    fn verify_building(source: Vec<i64>, expected: Vec<i64>) {
-        let tree =
-            MassReadSegmentTree::<
-                i64,
-                AssignmentModification<i64>,
-                SumReduction<i64>
-            >::build(source);
-
-        assert_eq!(tree.data, expected);
-
+    fn build(source: Vec<i64>) -> MassReadSegmentTree::<
+        i64,
+        AssignmentModification<i64>,
+        SumReduction<i64>
+    > {
+        MassReadSegmentTree::<
+            i64,
+            AssignmentModification<i64>,
+            SumReduction<i64>
+        >::build(source)
     }
 
-    #[test]
-    fn test_building() {
-        verify_building(vec![1, 2, 3], vec![6, 3, 3, 1, 2, 3, 0, 0]);
+    mod building_tests {
+        use crate::segment_tree::{AssignmentModification, MassReadSegmentTree, SumReduction};
+        use crate::segment_tree::mass_read_segment_tree::tests::build;
+
+        fn verify_building(source: Vec<i64>, expected: Vec<i64>) {
+            let tree =
+                build(source);
+
+            assert_eq!(tree.data, expected);
+
+        }
+
+        #[test]
+        fn test_building() {
+            verify_building(vec![1, 2, 3], vec![6, 3, 3, 1, 2, 3, 0, 0]);
+        }
+
+        #[test]
+        fn test_building_two() {
+            verify_building(vec![1, 2], vec![3, 1, 2, 0]);
+        }
+
+        #[test]
+        fn test_building_single() {
+            verify_building(vec![1], vec![1, 0]);
+        }
     }
 
-    #[test]
-    fn test_building_two() {
-        verify_building(vec![1, 2], vec![3, 1, 2, 0]);
+    mod modifying_tests {
+        use crate::segment_tree::{AssignmentModification, ElementModificationQuery, ElementModifier};
+        use crate::segment_tree::mass_read_segment_tree::tests::build;
+
+        #[test]
+        fn modifying_test() {
+            let mut tree = build(vec![1, 2, 3]);
+            tree.modify_element(ElementModificationQuery {
+                position: 1,
+                mqd: AssignmentModification{assigned_value: 10},
+                _re: Default::default()
+            });
+
+            assert_eq!(tree.data, build(vec![1, 10, 3]).data);
+
+            tree.modify_element(ElementModificationQuery {
+                position: 0,
+                mqd: AssignmentModification{assigned_value: 42},
+                _re: Default::default()
+            });
+
+            tree.modify_element(ElementModificationQuery {
+                position: 2,
+                mqd: AssignmentModification{assigned_value: -566},
+                _re: Default::default()
+            });
+
+            assert_eq!(tree.data, build(vec![42, 10, -566]).data);
+        }
     }
 
-    #[test]
-    fn test_building_single() {
-        verify_building(vec![1], vec![1, 0]);
-    }
+
 }
+

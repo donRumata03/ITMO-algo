@@ -70,7 +70,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
 	}
 
 	pub fn parent(i: usize) -> Option<usize> {
-		if i != 0 {None} else { Some((i - 1) / 2) }
+		if i == 0 {None} else { Some((i - 1) / 2) }
 	}
 
 	pub fn smallest_pow_of_two_size(n: usize) -> usize { // TODO: 1. Try using 2 ^n - 1; 2. Try non-full tree with 2n elements

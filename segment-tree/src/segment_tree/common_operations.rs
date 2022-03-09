@@ -14,7 +14,7 @@ impl<T: From<i64> + Add<Output=T> + ReductionElement> ReductionOp<T> for SumRedu
 }
 
 pub struct AssignmentModification<RE: ReductionElement> {
-    assigned_value: RE
+    pub assigned_value: RE
 }
 
 impl<RE: ReductionElement> ModificationDescriptor<RE> for AssignmentModification<RE> {

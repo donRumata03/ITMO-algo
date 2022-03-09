@@ -25,7 +25,7 @@ pub trait ModificationDescriptor<RE: ReductionElement> {
 pub struct ElementModificationQuery<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
     pub position: usize,
     pub mqd: MD,
-    _re: PhantomData<RE>
+    pub(crate) _re: PhantomData<RE>
 }
 
 // impl<RE> ModificationQuery for ElementModificationQuery<RE> {}
