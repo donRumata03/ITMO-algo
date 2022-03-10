@@ -1,3 +1,4 @@
+use std::cmp::max;
 use super::*;
 
 fn msb(value: usize) -> Option<usize> {
@@ -28,14 +29,45 @@ pub struct SegmentTreeEngine<RE: ReductionElement, RO: ReductionOp<RE>> {
 	_rp: PhantomData<RO>
 }
 
+enum RangeRelation {
+	Inside,         // No elements outside
+	Outside,        // No elements inside
+	Intersection    // Some elements both inside and outside
+}
+
 impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
-	fn half_split_range(rng: &Range<usize>) -> (Range<usize>, Range<usize>) {
+	pub fn half_split_range(rng: &Range<usize>) -> (Range<usize>, Range<usize>) {
 		let mid = (rng.start + rng.end) / 2;
 		(
 			rng.start..mid,
 			mid..rng.end
 		)
 	}
+
+	pub fn intersect_ranges(r1: &Range<usize>, r2: &Range<usize>) -> Range<usize> {
+		max(r1.start, r2.start)..min(r1.end, r2.end)
+	}
+
+
+	// pub fn ranges_equal(r1: Range<usize>, r2: Range<usize>) {
+	//
+	// }
+
+	pub fn contains_range(container: &Range<usize>, contained: &Range<usize>) -> bool {
+		container.start <= contained.start && container.end >= contained.end
+	}
+
+
+
+	// fn range_relation(base: Range<usize>, analyzed: Range<usize>) -> RangeRelation {
+	// 	if base.() {
+	//
+	// 	}
+	//
+	// 	let b = base == analyzed;
+	//
+	// 	todo!()
+	// }
 
 	pub fn is_floor(&self, tree_index: usize) -> bool {
 		tree_index >= Self::floor_start(self.data.len())

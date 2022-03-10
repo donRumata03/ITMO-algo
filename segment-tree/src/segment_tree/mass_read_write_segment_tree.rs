@@ -30,7 +30,7 @@ impl<
 > SegmentReducer<RE, RO> for MassReadWriteSegmentTree<RE, MD, RO>
     where RO: RecountableAfterMassApplication<RE, MD>
 {
-    fn reduce_segment(&mut self, q: SegmentReductionQuery<RE, RO>) {
+    fn reduce_segment(&mut self, q: &SegmentReductionQuery<RE, RO>) -> RE {
         todo!()
     }
 }

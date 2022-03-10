@@ -33,6 +33,13 @@ mod segment_tree;
 
 
 fn main() {
-    println!("Hello!");
+    // println!("Hello!");
+
+    let r1 = (1i64..0i64);
+    let r2 = (-100i64..-100000i64);
+
+    println!("{}", r1.is_empty());
+    println!("{}", r2.is_empty());
+    println!("{}", r1 == r2);
 }
 

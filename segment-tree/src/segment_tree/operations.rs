@@ -45,8 +45,8 @@ pub struct ElementReductionQuery<RE: ReductionElement, RO: ReductionOp<RE>> {
 
 pub struct SegmentReductionQuery<RE: ReductionElement, RO: ReductionOp<RE>> {
     pub segment: Range<usize>,
-    _re: PhantomData<RE>,
-    _ro: PhantomData<RO>
+    pub(crate) _re: PhantomData<RE>,
+    pub(crate) _ro: PhantomData<RO>
 }
 
 /// Traits for a data structure answering different type of queries
@@ -78,7 +78,7 @@ pub trait ElementReducer<RE: ReductionElement, RO: ReductionOp<RE>> {
 }
 
 pub trait SegmentReducer<RE: ReductionElement, RO: ReductionOp<RE>> {
-    fn reduce_segment(&mut self, q: SegmentReductionQuery<RE, RO>);
+    fn reduce_segment(&mut self, q: &SegmentReductionQuery<RE, RO>) -> RE;
 }
 
 

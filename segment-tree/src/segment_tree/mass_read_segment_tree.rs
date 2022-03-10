@@ -43,7 +43,8 @@ impl<
         node_index >= SegmentTreeEngine::<RE, RO>::floor_start(self.data.len())
     }
 
-
+    /// Updates reductions in the whole subtree owned by `root` node (including `root` itself)
+    /// Floor nodes are taken as granted, other selected nodes are updated «from down to up»
     fn update_node_reductions_down_from(&mut self, root: usize) {
         if !self.is_floor_node(root) {
             self.update_node_reductions_down_from(SegmentTreeEngine::<RE, RO>::left_child(root));
@@ -70,8 +71,40 @@ impl<
         self.update_node_reductions_up_from(tree_index)
     }
 
-    fn reduce_segment_impl(&mut self, q: SegmentReductionQuery<RE, RO>) {
-        todo!()
+    fn reduce_segment_impl(
+        &mut self,
+        tree_index: usize,
+        controlled_segment: Range<usize>,
+        q: &SegmentReductionQuery<RE, RO>
+    ) -> Option<RE> {
+        // If this node has nothing to do with query, return None
+        if SegmentTreeEngine::<RE, RO>::intersect_ranges(&controlled_segment, &q.segment).is_empty() {
+            return None;
+        }
+
+        // If controlled segment is fully in query range, return it full
+        if SegmentTreeEngine::<RE, RO>::contains_range(&q.segment, &controlled_segment) {
+            return Some(self.data[tree_index].clone());
+        }
+
+        // Otherwise, glue answer from left and right queries
+        let children_ranges = SegmentTreeEngine::<RE, RO>::half_split_range(&controlled_segment);
+        let left_result = self.reduce_segment_impl(
+            SegmentTreeEngine::<RE, RO>::left_child(tree_index),
+            children_ranges.0,
+            q
+        );
+
+        let right_result = self.reduce_segment_impl(
+            SegmentTreeEngine::<RE, RO>::right_child(tree_index),
+            children_ranges.1,
+            q
+        );
+
+        left_result.iter()
+            .chain(right_result.iter()).
+            cloned()
+            .reduce(RO::apply)
     }
 }
 
@@ -107,12 +140,13 @@ impl<
 }
 
 impl<
-    RE: ReductionElement,
+    RE: ReductionElement + Debug,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > SegmentReducer<RE, RO> for MassReadSegmentTree<RE, MD, RO> {
-    fn reduce_segment(&mut self, q: SegmentReductionQuery<RE, RO>) {
-        todo!()
+    fn reduce_segment(&mut self, q: &SegmentReductionQuery<RE, RO>) -> RE {
+        self.reduce_segment_impl(0, 0..self.data.len(), q)
+            .unwrap_or(RO::neutral())
     }
 }
 
@@ -192,6 +226,28 @@ mod tests {
         }
     }
 
+    mod reducing_tests {
+        use crate::segment_tree::mass_read_segment_tree::tests::build;
+        use crate::segment_tree::{SegmentReducer, SegmentReductionQuery};
 
+        #[test]
+        fn test_reducing() {
+            let mut tree = build(vec![1, 2, 3]);
+
+            let mut query = |range| tree.reduce_segment(&SegmentReductionQuery{ segment: range, _re: Default::default(), _ro: Default::default() });
+
+            assert_eq!(query(0..0), 0);
+            assert_eq!(query(0..1), 1);
+            assert_eq!(query(0..2), 3);
+            assert_eq!(query(0..3), 6);
+
+            assert_eq!(query(1..1), 0);
+            assert_eq!(query(1..2), 2);
+            assert_eq!(query(1..3), 5);
+
+            assert_eq!(query(2..2), 0);
+            assert_eq!(query(2..3), 3);
+        }
+    }
 }
 
