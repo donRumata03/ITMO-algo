@@ -13,7 +13,7 @@ pub struct MassReadSegmentTree<
 
 /// Private impls
 impl<
-    RE: ReductionElement + Debug,
+    RE: ReductionElement,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > MassReadSegmentTree<RE, MD, RO> {
@@ -131,7 +131,7 @@ impl<
 }
 
 impl<
-    RE: ReductionElement + Debug,
+    RE: ReductionElement,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > ElementModifier<RE, MD> for MassReadSegmentTree<RE, MD, RO> {
@@ -141,7 +141,7 @@ impl<
 }
 
 impl<
-    RE: ReductionElement + Debug,
+    RE: ReductionElement,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > SegmentReducer<RE, RO> for MassReadSegmentTree<RE, MD, RO> {
