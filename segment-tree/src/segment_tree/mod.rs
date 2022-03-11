@@ -19,3 +19,7 @@ pub use self::common_operations::*;
 
 pub mod testing_queries;
 pub use self::testing_queries::*;
+
+pub mod mass_write_segment_tree;
+pub use self::mass_write_segment_tree::*;
+

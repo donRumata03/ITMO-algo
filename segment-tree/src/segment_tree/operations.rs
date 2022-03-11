@@ -18,6 +18,7 @@ pub trait DistributiveRelativeTo<T: ReductionElement>: ReductionOp<T> {}
 
 /// Type that represents set of possible modifications of elements
 pub trait ModificationDescriptor<RE: ReductionElement>: Clone {
+    fn identity() -> Self;
     fn apply(&self, argument: RE) -> RE;
 }
 
