@@ -64,7 +64,7 @@ impl<
     }
 
 
-    fn modify_element_impl(&mut self, q: ElementModificationQuery<RE, MD>) {
+    fn modify_element_impl(&mut self, q: &ElementModificationQuery<RE, MD>) {
         let tree_index = SegmentTreeEngine::<RE, RO>::initial_element_tree_index(self.data.len(), q.position);
         self.data[tree_index] = q.mqd.apply(self.data[tree_index].clone());
 
@@ -208,26 +208,21 @@ mod tests {
         #[test]
         fn modifying_test() {
             let mut tree = build(vec![1, 2, 3]);
-            tree.modify_element(&ElementModificationQuery {
-                position: 1,
-                mqd: AssignmentModification{assigned_value: 10},
-                _re: Default::default()
-            });
+            tree.modify_element(&ElementModificationQuery::new(
+                1,
+                AssignmentModification{assigned_value: 10}
+            ));
 
             assert_eq!(tree.data, build(vec![1, 10, 3]).data);
 
-            tree.modify_element(&ElementModificationQuery {
-                position: 0,
-                mqd: AssignmentModification{assigned_value: 42},
-                _re: Default::default()
-            });
-
-            tree.modify_element(&ElementModificationQuery {
-                position: 2,
-                mqd: AssignmentModification{assigned_value: -566},
-                _re: Default::default()
-            });
-
+            tree.modify_element(&ElementModificationQuery::new(
+                0,
+                AssignmentModification{assigned_value: 42}
+            ));
+            tree.modify_element(&ElementModificationQuery::new(
+                2,
+                AssignmentModification{assigned_value: -566}
+            ));
             assert_eq!(tree.data, build(vec![42, 10, -566]).data);
         }
     }
@@ -240,7 +235,7 @@ mod tests {
         fn test_reducing() {
             let mut tree = build(vec![1, 2, 3]);
 
-            let mut query = |range| tree.reduce_segment(&SegmentReductionQuery{ segment: range, _re: Default::default(), _ro: Default::default() });
+            let mut query = |range| tree.reduce_segment(&SegmentReductionQuery::new(range));
 
             assert_eq!(query(0..0), 0);
             assert_eq!(query(0..1), 1);

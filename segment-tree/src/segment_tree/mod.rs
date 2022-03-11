@@ -19,6 +19,3 @@ pub use self::common_operations::*;
 
 pub mod testing_queries;
 pub use self::testing_queries::*;
-
-
-// TODO: implement models with just plain operations for testing

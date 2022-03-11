@@ -13,9 +13,11 @@ impl<T: From<i64> + Add<Output=T> + ReductionElement> ReductionOp<T> for SumRedu
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct AssignmentModification<RE: ReductionElement> {
     pub assigned_value: RE
 }
+
 
 impl<RE: ReductionElement> ModificationDescriptor<RE> for AssignmentModification<RE> {
     fn apply(&self, _argument: RE) -> RE {
@@ -23,7 +25,7 @@ impl<RE: ReductionElement> ModificationDescriptor<RE> for AssignmentModification
     }
 }
 
-///
+#[derive(Clone, Debug)]
 pub enum SegmentAdditionAssignment {
     Addition(i64),
     Assignment(i64)
@@ -56,6 +58,7 @@ impl ComposableModificationDescriptor<i64> for SegmentAdditionAssignment {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct MinReduction {
 
 }

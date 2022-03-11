@@ -27,7 +27,7 @@ impl<
 	RO: ReductionOp<RE>
 > SegmentReducer<RE, RO> for DummyQueryAnswerer<RE, MD, RO> {
 	fn reduce_segment(&mut self, q: &SegmentReductionQuery<RE, RO>) -> RE {
-		(&self.data[&q.segment]).iter()
+		(&self.data[q.segment.clone()]).iter()
 			.cloned()
 			.fold(RO::neutral(), RO::apply)
 	}
@@ -53,7 +53,7 @@ impl<
 	RO: ReductionOp<RE>
 > ElementReducer<RE, RO> for DummyQueryAnswerer<RE, MD, RO> {
 	fn reduce_element(&mut self, q: &ElementReductionQuery<RE, RO>) -> RE {
-		self.reduce_segment( &SegmentReductionQuery::new(q.element_index..q.element_index + 1))
+		self.reduce_segment( &(q.clone().into()))
 	}
 }
 
@@ -65,8 +65,14 @@ impl<
 	RO: ReductionOp<RE>
 > ElementModifier<RE, MD> for DummyQueryAnswerer<RE, MD, RO> {
 	fn modify_element(&mut self, q: &ElementModificationQuery<RE, MD>) {
-		self.modify_segment(&SegmentModificationQuery::new(
-			q.position..q.position + 1, q.mqd.clone())
-		);
+		self.modify_segment(&(q.clone().into()));
 	}
+}
+
+
+
+/// Runs random queries of allowed types in random order and compares it with reference model
+/// TODO: decide how to do it generically
+pub fn run_query_tests() {
+	todo!()
 }

@@ -4,7 +4,7 @@ pub trait ReductionElement: Clone {
 
 }
 
-pub trait ReductionOp<T: ReductionElement> {
+pub trait ReductionOp<T: ReductionElement>: Clone {
     fn neutral() -> T;
     fn apply(left: T, right: T) -> T;
 }
@@ -22,6 +22,7 @@ pub trait ModificationDescriptor<RE: ReductionElement>: Clone {
 }
 
 /// Different kinds of queries { modification, reduction } × { segment, element }
+#[derive(Debug, Clone)]
 pub struct ElementModificationQuery<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
     pub position: usize,
     pub mqd: MD,
@@ -40,6 +41,7 @@ impl<RE: ReductionElement, MD: ModificationDescriptor<RE>> ElementModificationQu
 
 // impl<RE> ModificationQuery for ElementModificationQuery<RE> {}
 
+#[derive(Debug, Clone)]
 pub struct SegmentModificationQuery<RE: ReductionElement, MD: ModificationDescriptor<RE>> {
     pub segment: Range<usize>,
     pub mqd: MD,
@@ -62,7 +64,7 @@ impl<RE: ReductionElement, MD: ModificationDescriptor<RE>> SegmentModificationQu
     }
 }
 
-
+#[derive(Debug, Clone)]
 pub struct ElementReductionQuery<RE: ReductionElement, RO: ReductionOp<RE>> {
     pub element_index: usize,
     _re: PhantomData<RE>,
@@ -86,7 +88,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>> From<ElementReductionQuery<RE, R
 }
 
 
-
+#[derive(Debug, Clone)]
 pub struct SegmentReductionQuery<RE: ReductionElement, RO: ReductionOp<RE>> {
     pub segment: Range<usize>,
     _re: PhantomData<RE>,
