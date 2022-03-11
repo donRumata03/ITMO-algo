@@ -58,21 +58,6 @@ pub trait SegmentModifier<RE: ReductionElement, MD: ModificationDescriptor<RE>> 
     fn modify_segment(&mut self, q: SegmentModificationQuery<RE, MD>);
 }
 
-// TODO: have front-end and back-end traits: every type only implements itself one of
-// TODO: Segment or query, but for frontend segment one also implements element one
-// impl<
-// 	RE,
-// 	MD: ModificationDescriptor<RE>,
-// 	Answerer: SegmentModifier<RE, MD>
-// > ElementModifier<RE, MD> for Answerer {
-// 	fn modify_element(&mut self, q: ElementModificationQuery<RE, MD>) {
-// 		self.modify_segment(SegmentModificationQuery::<RE, MD>{
-// 			segment: q.position..q.position + 1,
-// 			mqd: q.mqd,
-// 		})
-// 	}
-// }
-
 pub trait ElementReducer<RE: ReductionElement, RO: ReductionOp<RE>> {
     fn reduce_element(&mut self, q: ElementReductionQuery<RE, RO>);
 }
@@ -80,20 +65,6 @@ pub trait ElementReducer<RE: ReductionElement, RO: ReductionOp<RE>> {
 pub trait SegmentReducer<RE: ReductionElement, RO: ReductionOp<RE>> {
     fn reduce_segment(&mut self, q: &SegmentReductionQuery<RE, RO>) -> RE;
 }
-
-
-// impl<
-// 	RE,
-// 	RO: ReductionOp<RE>,
-// 	Answerer: SegmentReducer<RE, RO>
-// > ElementReducer<RE, RO> for Answerer {
-//
-// 	fn reduce_element(&mut self, q: ElementReductionQuery<RE, RO>) {
-// 		self.modify_segment(SegmentReductionQuery::<RE, RO>{
-// 			segment: q.position..q.position + 1,
-// 		})
-// 	}
-// }
 
 
 /// Composition and recounting (for both reduction and modification on segment)
