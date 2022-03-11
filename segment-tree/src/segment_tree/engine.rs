@@ -133,11 +133,19 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		}
 	}
 
+	pub fn decompose_into_segments_impl(root: Node) -> Vec<Node> {
+		todo!()
+	}
+
 	pub fn decompose_into_segments() -> Vec<Node> {
 		todo!()
 	}
 
-	pub fn visit() {
+	pub fn reduce() -> Option<Node> {
+		todo!()
+	}
+
+	pub fn traverse(/* visitor: Fn(&mut Node) -> bool */) {
 		todo!()
 	}
 }
