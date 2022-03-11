@@ -114,6 +114,10 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeEngine<RE, RO> {
 					as u32 + 1)})
 	}
 
+	pub fn array_size(tree_size: usize) -> usize {
+		tree_size / 2
+	}
+
 	pub fn floor_start(tree_size: usize) -> usize {
 		assert!(tree_size.is_power_of_two());
 		assert!(tree_size >= 2);

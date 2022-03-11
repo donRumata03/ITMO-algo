@@ -71,6 +71,7 @@ impl<
         self.update_node_reductions_up_from(tree_index)
     }
 
+    /// Returns reduction on q.segment intersected with segment controlled by the vertex
     fn reduce_segment_impl(
         &mut self,
         tree_index: usize,
@@ -145,8 +146,12 @@ impl<
     RO: ReductionOp<RE>
 > SegmentReducer<RE, RO> for MassReadSegmentTree<RE, MD, RO> {
     fn reduce_segment(&mut self, q: &SegmentReductionQuery<RE, RO>) -> RE {
-        self.reduce_segment_impl(0, 0..self.data.len(), q)
-            .unwrap_or(RO::neutral())
+        self.reduce_segment_impl(
+            0,
+            0..SegmentTreeEngine::<RE, RO>::array_size(self.data.len()),
+            q
+        )
+        .unwrap_or(RO::neutral())
     }
 }
 
@@ -181,6 +186,7 @@ mod tests {
 
         #[test]
         fn test_building() {
+            //                                               0  1  2  3  4  5  6  7
             verify_building(vec![1, 2, 3], vec![6, 3, 3, 1, 2, 3, 0, 0]);
         }
 
