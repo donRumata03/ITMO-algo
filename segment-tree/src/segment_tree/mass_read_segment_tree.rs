@@ -135,7 +135,7 @@ impl<
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > ElementModifier<RE, MD> for MassReadSegmentTree<RE, MD, RO> {
-    fn modify_element(&mut self, q: ElementModificationQuery<RE, MD>) {
+    fn modify_element(&mut self, q: &ElementModificationQuery<RE, MD>) {
         self.modify_element_impl(q);
     }
 }
@@ -208,7 +208,7 @@ mod tests {
         #[test]
         fn modifying_test() {
             let mut tree = build(vec![1, 2, 3]);
-            tree.modify_element(ElementModificationQuery {
+            tree.modify_element(&ElementModificationQuery {
                 position: 1,
                 mqd: AssignmentModification{assigned_value: 10},
                 _re: Default::default()
@@ -216,13 +216,13 @@ mod tests {
 
             assert_eq!(tree.data, build(vec![1, 10, 3]).data);
 
-            tree.modify_element(ElementModificationQuery {
+            tree.modify_element(&ElementModificationQuery {
                 position: 0,
                 mqd: AssignmentModification{assigned_value: 42},
                 _re: Default::default()
             });
 
-            tree.modify_element(ElementModificationQuery {
+            tree.modify_element(&ElementModificationQuery {
                 position: 2,
                 mqd: AssignmentModification{assigned_value: -566},
                 _re: Default::default()

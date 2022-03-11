@@ -18,7 +18,7 @@ impl<
 > SegmentModifier<RE, MD> for MassReadWriteSegmentTree<RE, MD, RO>
     where RO: RecountableAfterMassApplication<RE, MD>
 {
-    fn modify_segment(&mut self, q: SegmentModificationQuery<RE, MD>) {
+    fn modify_segment(&mut self, q: &SegmentModificationQuery<RE, MD>) {
         todo!()
     }
 }
