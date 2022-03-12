@@ -25,6 +25,28 @@ pub trait SegmentTreeNode {
 	fn neutral() -> Self;
 }
 
+
+/// There are a lot of variations of segment trees. But they all definitely have something in common.
+/// SegmentTreeEngine is responsible for navigation on ST representation as contiguous memory.
+///
+/// When we traverse a segment tree, there are a couple of typical options:
+/// — Searching for a particular element (given its index)
+///
+/// — Discovering into a segment (by going through `O(log(n))` nodes and dividing the segment into `O(log(n))` nodes)
+///
+/// — Conditional tree traversal (for example, doing binary search): performing decision which child to visit for each node
+///
+/// — Condition traversal with filtering: if node doesn't satisfy a certain predicate, don't step into it
+///
+/// For each option the `custom traverser` can do something with each element on its path
+/// For example,
+///
+/// — «push» modification descriptors by splitting it into two identical parts and forwarding them to both children
+///
+/// — apply operation to the whole segment and reset parent's descriptors to `id`
+///
+/// The whole variety of traversals can be represented as top-to-down descent with predicates (with some standard presets).
+/// But recursion can be optimized out for some special cases
 pub struct SegmentTreeEngine<RE: ReductionElement, RO: ReductionOp<RE>, Node> {
 	data: Vec<Node>,
 	_re: PhantomData<RE>,
@@ -133,12 +155,26 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		}
 	}
 
-	pub fn decompose_into_segments_impl(root: Node) -> Vec<Node> {
-		todo!()
+
+	/// Segments in answer are sorted because recursion always starts from left
+	pub fn decompose_into_segments_impl(
+		&self,
+		range: Range<usize>,
+		root: NodePositionDescriptor,
+		mut accumulator: Vec<NodePositionDescriptor>
+	) -> Vec<NodePositionDescriptor> {
+
+		todo!();
+
+		accumulator
 	}
 
-	pub fn decompose_into_segments() -> Vec<Node> {
-		todo!()
+	pub fn decompose_into_segments(&self, range: Range<usize>) -> Vec<NodePositionDescriptor> {
+		let mut accumulator = Vec::new();
+
+		self.decompose_into_segments_impl(range, );
+
+		accumulator
 	}
 
 	pub fn reduce() -> Option<Node> {
