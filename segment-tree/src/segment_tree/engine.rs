@@ -155,6 +155,26 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		}
 	}
 
+	pub fn set_floor(&mut self, array: &Vec<Node>) {
+		self.data[self.floor_range()].clone_from_slice(array);
+	}
+
+	pub fn rebuild_from_floor<F>(&mut self, combiner: F)
+		where F: FnMut(Node, Node) -> Node
+	{
+		&mut self.data[..self.floor_start()]
+			.iter_mut()
+			.enumerate()
+			.rev()
+			.for_each(|(index, node)| {
+				*node = combiner(
+					self.data[Self::left_child(index)].clone(),
+					self.data[Self::right_child(index)].clone()
+				);
+			})
+		;
+
+	}
 
 	/// Segments in answer are sorted because recursion always starts from left
 	pub fn decompose_into_segments_impl(

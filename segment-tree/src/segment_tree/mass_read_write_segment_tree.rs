@@ -6,7 +6,7 @@ pub struct MassReadWriteSegmentTree<
     MD: ComposableModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > where RO: RecountableAfterMassApplication<RE, MD> {
-    e: SegmentTreeEngine<RE, RO>,
+    e: SegmentTreeEngine<RE, RO, RE>,
     _m: PhantomData<MD>,
     _r: PhantomData<RO>,
 }
