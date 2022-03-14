@@ -1,4 +1,5 @@
 use std::cmp::max;
+use std::iter::TrustedRandomAccessNoCoerce;
 use std::ops::{Index, IndexMut};
 use super::*;
 
@@ -13,6 +14,11 @@ fn msb(value: usize) -> Option<usize> {
 pub struct NodePositionDescriptor {
 	pub tree_index: usize,
 	pub curated_segment: Range<usize>
+}
+
+pub enum ChildnessType {
+	LeftChild,
+	RightChild
 }
 
 // impl NodePositionDescriptor {
@@ -76,15 +82,15 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		container.start <= contained.start && container.end >= contained.end
 	}
 
-	pub fn left_child(i: usize) -> usize {
+	pub fn left_child_index(i: usize) -> usize {
 		2 * i + 1
 	}
 
-	pub fn right_child(i: usize) -> usize {
+	pub fn right_child_index(i: usize) -> usize {
 		2 * i + 2
 	}
 
-	pub fn parent(i: usize) -> Option<usize> {
+	pub fn parent_index(i: usize) -> Option<usize> {
 		if i == 0 {None} else { Some((i - 1) / 2) }
 	}
 
@@ -110,6 +116,19 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 	}
 }
 
+
+/// Impls for typical traversals
+impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTreeEngine<RE, RO, Node> {
+
+	///
+	pub fn traverse_up_from_node_inclusive<F>(node: NodePositionDescriptor, f: F)
+		where F: FnMut(NodePositionDescriptor)
+	{
+		if self.parent
+	}
+
+}
+
 impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTreeEngine<RE, RO, Node> {
 	pub fn is_floor(&self, tree_index: usize) -> bool {
 		tree_index >= self.floor_start()
@@ -124,7 +143,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		if self.is_floor(node.tree_index) { None }
 		else {
 			Some(NodePositionDescriptor {
-				tree_index: Self::left_child(node.tree_index),
+				tree_index: Self::left_child_index(node.tree_index),
 				curated_segment: Self::half_split_range(&node.curated_segment).0
 			})
 		}
@@ -134,10 +153,47 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		if self.is_floor(node.tree_index) { None }
 		else {
 			Some(NodePositionDescriptor {
-				tree_index: Self::right_child(node.tree_index),
+				tree_index: Self::right_child_index(node.tree_index),
 				curated_segment: Self::half_split_range(&node.curated_segment).1
 			})
 		}
+	}
+
+	/// All layers that have parents (i. e. all excluding root node) start from odd indexes
+	/// Node `0` is considered «right child» of nothing
+	pub fn childness_type(&self, node: &NodePositionDescriptor) -> ChildnessType {
+		assert_ne!(node.tree_index, 0);
+
+		match node.tree_index % 2 {
+			0 => ChildnessType::RightChild,
+			1 => ChildnessType::LeftChild,
+			_ => panic!()
+		}
+	}
+
+
+	pub fn node_sibling(&self, node: &NodePositionDescriptor) -> Option<NodePositionDescriptor> {
+		// Siblings always have exactly the same (and power-of-two) ranges for now
+		let parent = self.node_parent(node)?;
+		Some(
+			match self.childness_type(node) {
+				ChildnessType::LeftChild => self.node_right_child(&parent),
+				ChildnessType::RightChild => self.node_left_child(&parent)
+			}.unwrap()
+		)
+	}
+
+	pub fn node_parent(&self, node: &NodePositionDescriptor) -> Option<NodePositionDescriptor> {
+		// To get parent's range, we need to combine self with sibling (left or right)
+		let parent_index = Self::parent_index(node.tree_index)?;
+
+		let node_range_size = node.curated_segment.size();
+		let parent_range = match self.childness_type(node) {
+			ChildnessType::LeftChild => node.curated_segment.start..node.curated_segment.end + node_range_size,
+			ChildnessType::RightChild => node.curated_segment.start - node_range_size..node.curated_segment.end
+		};
+
+		Some(NodePositionDescriptor{ tree_index: parent_index, curated_segment: parent_range })
 	}
 
 	// pub fn access_node(&mut self, node_descriptor: &NodePositionDescriptor) -> Node {
@@ -168,12 +224,11 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 			.rev()
 			.for_each(|(index, node)| {
 				*node = combiner(
-					self.data[Self::left_child(index)].clone(),
-					self.data[Self::right_child(index)].clone()
+					self.data[Self::left_child_index(index)].clone(),
+					self.data[Self::right_child_index(index)].clone()
 				);
 			})
 		;
-
 	}
 
 	/// Segments in answer are sorted because recursion always starts from left
