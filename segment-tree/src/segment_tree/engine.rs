@@ -1,5 +1,4 @@
 use std::cmp::max;
-use std::iter::TrustedRandomAccessNoCoerce;
 use std::ops::{Index, IndexMut};
 use super::*;
 
@@ -120,12 +119,23 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 /// Impls for typical traversals
 impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTreeEngine<RE, RO, Node> {
 
-	///
-	pub fn traverse_up_from_node_inclusive<F>(node: NodePositionDescriptor, f: F)
-		where F: FnMut(NodePositionDescriptor)
-	{
-		if self.parent
+	// ///
+	// pub fn traverse_up_from_node_inclusive<F>(node: NodePositionDescriptor, f: F)
+	// 	where F: FnMut(NodePositionDescriptor)
+	// {
+	// 	if self.parent
+	// }
+
+	pub fn reduce(&self, segment: Range<usize>) -> Option<Node> {
+		todo!()
 	}
+
+	pub fn search_traverse<F>(&mut self, visitor: F)
+		where F: FnMut(&mut Node) -> bool
+	{
+		todo!();
+	}
+
 
 }
 
@@ -250,14 +260,6 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		self.decompose_into_segments_impl(range, );
 
 		accumulator
-	}
-
-	pub fn reduce() -> Option<Node> {
-		todo!()
-	}
-
-	pub fn traverse(/* visitor: Fn(&mut Node) -> bool */) {
-		todo!()
 	}
 }
 
