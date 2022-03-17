@@ -1,14 +1,18 @@
+use std::convert::identity;
 use std::fmt::Debug;
 use super::*;
+
+macro_rules! Engine {
+    () => {SegmentTreeEngine::<RE, RO, RE>}
+}
 
 pub struct MassReadSegmentTree<
     RE: ReductionElement,
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > {
-    pub(crate) data: Vec<RE>,
-    _m: PhantomData<MD>,
-    _r: PhantomData<RO>,
+    e: SegmentTreeEngine<RE, RO, RE>,
+    _md: MD
 }
 
 /// Private impls
@@ -18,96 +22,101 @@ impl<
     RO: ReductionOp<RE>
 > MassReadSegmentTree<RE, MD, RO> {
     pub fn fill_neutral(n: usize) -> Self {
-        Self::with_data(
-            vec![RO::neutral(); SegmentTreeEngine::<RE, RO>::smallest_pow_of_two_size(n)]
-        )
-    }
-
-    fn with_data(data: Vec<RE>) -> MassReadSegmentTree<RE, MD, RO> {
         Self {
-            data: data,
-            _m: Default::default(),
-            _r: Default::default(),
+            e: SegmentTreeEngine::fill_neutral(n),
+            _md: Default::default()
         }
     }
 
 
-    fn reduce_node(&mut self, parent_index: usize) {
-        self.data[parent_index] = RO::apply(
-            self.data[SegmentTreeEngine::<RE, RO>::left_child_index(parent_index)].clone(),
-            self.data[SegmentTreeEngine::<RE, RO>::right_child_index(parent_index)].clone()
+    fn reduce_node(&mut self, node: &NodePositionDescriptor) {
+        let left_node = self.e.node_left_child(node);
+        let right_node = self.e.node_right_child(node);
+        self.e[node] = RO::apply(
+            self.e[left_node],
+            self.e[right_node]
         );
+        //
+        // self.data[parent_index] = RO::apply(
+        //     self.data[SegmentTreeEngine::<RE, RO, RE>::left_child_index(parent_index)].clone(),
+        //     self.data[SegmentTreeEngine::<RE, RO, RE>::right_child_index(parent_index)].clone()
+        // );
     }
 
-    fn is_floor_node(&self, node_index: usize) -> bool {
-        node_index >= SegmentTreeEngine::<RE, RO>::floor_start(self.data.len())
-    }
+    //
+    // fn is_floor_node(&self, node: &NodePositionDescriptor) -> bool {
+    //
+    // }
 
     /// Updates reductions in the whole subtree owned by `root` node (including `root` itself)
     /// Floor nodes are taken as granted, other selected nodes are updated «from down to up»
-    fn update_node_reductions_down_from(&mut self, root: usize) {
-        if !self.is_floor_node(root) {
-            self.update_node_reductions_down_from(SegmentTreeEngine::<RE, RO>::left_child_index(root));
-            self.update_node_reductions_down_from(SegmentTreeEngine::<RE, RO>::right_child_index(root));
+    fn update_node_reductions_down_from(&mut self, root: &NodePositionDescriptor) {
+        if !self.e.node_is_floor(root) {
+            self.update_node_reductions_down_from(
+                &self.e.node_left_child(root).unwrap()
+            );
+            self.update_node_reductions_down_from(
+                &self.e.node_right_child(root).unwrap()
+            );
 
             self.reduce_node(root);
         }
     }
 
     /// All the nodes «depending» on bottom but not bottom itself
-    fn update_node_reductions_up_from(&mut self, bottom_tree_index: usize) {
-        let parent = SegmentTreeEngine::<RE, RO>::parent_index(bottom_tree_index);
+    fn update_node_reductions_up_from(&mut self, bottom_node: &NodePositionDescriptor) {
+        let parent = self.e.node_parent(bottom_node);
         if let Some(parent) = parent {
-            self.reduce_node(parent);
-            self.update_node_reductions_up_from(parent);
+            self.reduce_node(&parent);
+            self.update_node_reductions_up_from(&parent);
         }
     }
 
     /// Change the value at corresponding position on floor
     /// Update the tower depending on it
     fn modify_element_impl(&mut self, q: &ElementModificationQuery<RE, MD>) {
-        let tree_index = SegmentTreeEngine::<RE, RO>::initial_element_tree_index(self.data.len(), q.position);
-        self.data[tree_index] = q.mqd.apply(self.data[tree_index].clone());
+        let leaf_node = self.e.initial_array_node(q.position);
+        self.e[&leaf_node] = q.mqd.apply(self.e[&leaf_node].clone());
 
-        self.update_node_reductions_up_from(tree_index)
+        self.update_node_reductions_up_from(&leaf_node)
     }
 
-    /// Returns reduction on q.segment intersected with segment controlled by the vertex
-    fn reduce_segment_impl(
-        &mut self,
-        tree_index: usize,
-        controlled_segment: Range<usize>,
-        q: &SegmentReductionQuery<RE, RO>
-    ) -> Option<RE> {
-        // If this node has nothing to do with query, return None
-        if SegmentTreeEngine::<RE, RO>::intersect_ranges(&controlled_segment, &q.segment).is_empty() {
-            return None;
-        }
-
-        // If controlled segment is fully in query range, return it full
-        if SegmentTreeEngine::<RE, RO>::contains_range(&q.segment, &controlled_segment) {
-            return Some(self.data[tree_index].clone());
-        }
-
-        // Otherwise, glue answer from left and right queries
-        let children_ranges = SegmentTreeEngine::<RE, RO>::half_split_range(&controlled_segment);
-        let left_result = self.reduce_segment_impl(
-            SegmentTreeEngine::<RE, RO>::left_child_index(tree_index),
-            children_ranges.0,
-            q
-        );
-
-        let right_result = self.reduce_segment_impl(
-            SegmentTreeEngine::<RE, RO>::right_child_index(tree_index),
-            children_ranges.1,
-            q
-        );
-
-        left_result.iter()
-            .chain(right_result.iter()).
-            cloned()
-            .reduce(RO::apply)
-    }
+    // /// Returns reduction on q.segment intersected with segment controlled by the vertex
+    // fn reduce_segment_impl(
+    //     &mut self,
+    //     tree_index: usize,
+    //     controlled_segment: Range<usize>,
+    //     q: &SegmentReductionQuery<RE, RO>
+    // ) -> Option<RE> {
+    //     // If this node has nothing to do with query, return None
+    //     if SegmentTreeEngine::<RE, RO>::intersect_ranges(&controlled_segment, &q.segment).is_empty() {
+    //         return None;
+    //     }
+    //
+    //     // If controlled segment is fully in query range, return it full
+    //     if SegmentTreeEngine::<RE, RO>::contains_range(&q.segment, &controlled_segment) {
+    //         return Some(self.data[tree_index].clone());
+    //     }
+    //
+    //     // Otherwise, glue answer from left and right queries
+    //     let children_ranges = SegmentTreeEngine::<RE, RO>::half_split_range(&controlled_segment);
+    //     let left_result = self.reduce_segment_impl(
+    //         SegmentTreeEngine::<RE, RO>::left_child_index(tree_index),
+    //         children_ranges.0,
+    //         q
+    //     );
+    //
+    //     let right_result = self.reduce_segment_impl(
+    //         SegmentTreeEngine::<RE, RO>::right_child_index(tree_index),
+    //         children_ranges.1,
+    //         q
+    //     );
+    //
+    //     left_result.iter()
+    //         .chain(right_result.iter()).
+    //         cloned()
+    //         .reduce(RO::apply)
+    // }
 }
 
 
@@ -121,15 +130,19 @@ impl<
     /// — Assign floor
     ///
     /// — Build up from floor
-    pub fn build(initial_data: Vec<RE>) -> Self {
+    pub fn build(initial_data: &Vec<RE>) -> Self {
         let mut res = Self::fill_neutral(initial_data.len());
-        let data_start = SegmentTreeEngine::<RE, RO>::floor_start(res.data.len());
 
-        let to_copy = &mut res.data[data_start..data_start + initial_data.len()];
+        res.e.set_floor(initial_data);
+        res.e.rebuild_from_floor(RO::apply);
 
-        to_copy.clone_from_slice(&initial_data);
-
-        res.update_node_reductions_down_from(0);
+        // let data_start = SegmentTreeEngine::<RE, RO, RE>::floor_start(res.data.len());
+        //
+        // let to_copy = &mut res.data[data_start..data_start + initial_data.len()];
+        //
+        // to_copy.clone_from_slice(&initial_data);
+        //
+        // res.update_node_reductions_down_from(0);
 
         res
     }
@@ -151,12 +164,15 @@ impl<
     RO: ReductionOp<RE>
 > SegmentReducer<RE, RO> for MassReadSegmentTree<RE, MD, RO> {
     fn reduce_segment(&mut self, q: &SegmentReductionQuery<RE, RO>) -> RE {
-        self.reduce_segment_impl(
-            0,
-            0..SegmentTreeEngine::<RE, RO>::array_size(self.data.len()),
-            q
-        )
-        .unwrap_or(RO::neutral())
+        self.e.reduce(q.segment.clone(), identity, RO::apply)
+            .unwrap_or(RO::neutral())
+
+        // self.reduce_segment_impl(
+        //     0,
+        //     0..SegmentTreeEngine::<RE, RO>::array_size(self.data.len()),
+        //     q
+        // )
+        // .unwrap_or(RO::neutral())
     }
 }
 
@@ -174,7 +190,7 @@ mod tests {
             i64,
             AssignmentModification<i64>,
             SumReduction<i64>
-        >::build(source)
+        >::build(&source)
     }
 
     mod building_tests {

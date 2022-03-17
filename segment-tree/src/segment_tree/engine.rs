@@ -77,6 +77,10 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		max(r1.start, r2.start)..min(r1.end, r2.end)
 	}
 
+	pub fn range_size(r: &Range<usize>) -> usize {
+		max(r.end as isize - r.start as isize, 0) as usize
+	}
+
 	pub fn contains_range(container: &Range<usize>, contained: &Range<usize>) -> bool {
 		container.start <= contained.start && container.end >= contained.end
 	}
@@ -155,8 +159,8 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		);
 
 		left_result.iter()
-			.chain(right_result.iter()).
-			cloned()
+			.chain(right_result.iter())
+			.cloned()
 			.reduce(mapper)
 	}
 
@@ -171,10 +175,10 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		self.reduce_impl(self.root_node(), segment, &mapper, &reducer)
 	}
 
-	pub fn search_traverse<F>(&mut self, visitor: F)
+	pub fn search_traverse<F>(&mut self, visitor: F) -> usize
 		where F: FnMut(&mut Node) -> bool
 	{
-		todo!();
+		todo!()
 	}
 
 
@@ -190,7 +194,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		start..start + self.array_size()
 	}
 
-	pub fn node_is_floor(&self, node: NodePositionDescriptor) -> bool {
+	pub fn node_is_floor(&self, node: &NodePositionDescriptor) -> bool {
 		self.is_floor(node.tree_index)
 	}
 
@@ -249,13 +253,20 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		// To get parent's range, we need to combine self with sibling (left or right)
 		let parent_index = Self::parent_index(node.tree_index)?;
 
-		let node_range_size = node.curated_segment.size();
+		let node_range_size = node.curated_segment.();
 		let parent_range = match self.childness_type(node) {
 			ChildnessType::LeftChild => node.curated_segment.start..node.curated_segment.end + node_range_size,
 			ChildnessType::RightChild => node.curated_segment.start - node_range_size..node.curated_segment.end
 		};
 
 		Some(NodePositionDescriptor{ tree_index: parent_index, curated_segment: parent_range })
+	}
+
+	pub fn initial_array_node(&self, array_index: usize) -> NodePositionDescriptor {
+		NodePositionDescriptor {
+			tree_index: self.initial_element_tree_index(array_index),
+			curated_segment: array_index..array_index + 1
+		}
 	}
 
 	// pub fn access_node(&mut self, node_descriptor: &NodePositionDescriptor) -> Node {
