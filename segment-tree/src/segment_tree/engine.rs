@@ -125,9 +125,38 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 	// {
 	// 	if self.parent
 	// }
+	pub fn reduce_impl(&self, root: NodePositionDescriptor, segment: Range<usize>) -> Option<Node> {
+		if Self::intersect_ranges(&root.curated_segment, &segment).is_empty() {
+			return None;
+		}
+
+		// If controlled segment is fully in query range, return it full
+		if Self::contains_range(&segment, &root.curated_segment) {
+			return Some(self[root].clone());
+		}
+
+		// Otherwise, glue answer from left and right queries
+		let children_ranges = SegmentTreeEngine::<RE, RO>::half_split_range(&controlled_segment);
+		let left_result = self.reduce_segment_impl(
+			SegmentTreeEngine::<RE, RO>::left_child_index(tree_index),
+			children_ranges.0,
+			q
+		);
+
+		let right_result = self.reduce_segment_impl(
+			SegmentTreeEngine::<RE, RO>::right_child_index(tree_index),
+			children_ranges.1,
+			q
+		);
+
+		left_result.iter()
+			.chain(right_result.iter()).
+			cloned()
+			.reduce(RO::apply)
+	}
 
 	pub fn reduce(&self, segment: Range<usize>) -> Option<Node> {
-		todo!()
+		self.reduce_impl();
 	}
 
 	pub fn search_traverse<F>(&mut self, visitor: F)
@@ -140,13 +169,24 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 }
 
 impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTreeEngine<RE, RO, Node> {
-	pub fn is_floor(&self, tree_index: usize) -> bool {
+	fn is_floor(&self, tree_index: usize) -> bool {
 		tree_index >= self.floor_start()
 	}
 
 	fn floor_range(&self) -> Range<usize> {
 		let start = self.floor_start();
 		start..start + self.array_size()
+	}
+
+	pub fn node_is_floor(&self, node: NodePositionDescriptor) -> bool {
+		self.is_floor(node.tree_index)
+	}
+
+	pub fn root_node(&self) -> NodePositionDescriptor {
+		NodePositionDescriptor {
+			tree_index: 0,
+			curated_segment: 0..self.array_size()
+		}
 	}
 
 	pub fn node_left_child(&self, node: & NodePositionDescriptor) -> Option<NodePositionDescriptor> {
@@ -249,6 +289,10 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		mut accumulator: Vec<NodePositionDescriptor>
 	) -> Vec<NodePositionDescriptor> {
 
+		// if root.curated_segment.is_empty() {
+		//
+		// }
+
 		todo!();
 
 		accumulator
@@ -264,19 +308,19 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 }
 
 impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode>
-Index<NodePositionDescriptor> for SegmentTreeEngine<RE, RO, Node>
+Index<&NodePositionDescriptor> for SegmentTreeEngine<RE, RO, Node>
 {
 	type Output = Node;
 
-	fn index(&self, index: NodePositionDescriptor) -> &Self::Output {
+	fn index(&self, index: &NodePositionDescriptor) -> &Self::Output {
 		&self.data[index.tree_index]
 	}
 }
 
 impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode>
-IndexMut<NodePositionDescriptor> for SegmentTreeEngine<RE, RO, Node>
+IndexMut<&NodePositionDescriptor> for SegmentTreeEngine<RE, RO, Node>
 {
-	fn index_mut(&mut self, index: NodePositionDescriptor) -> &mut Self::Output {
+	fn index_mut(&mut self, index: &NodePositionDescriptor) -> &mut Self::Output {
 		&mut self.data[index.tree_index]
 	}
 }
