@@ -125,38 +125,50 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 	// {
 	// 	if self.parent
 	// }
-	pub fn reduce_impl(&self, root: NodePositionDescriptor, segment: Range<usize>) -> Option<Node> {
+	pub fn reduce_impl<ReductionType, M, R>(
+		&self,
+		root: NodePositionDescriptor,
+		segment: Range<usize>,
+		mapper: &M,
+	    reducer: &R
+	) -> Option<ReductionType>
+		where R: FnMut(ReductionType, ReductionType) -> ReductionType, M: FnMut(Node) -> ReductionType
+	{
 		if Self::intersect_ranges(&root.curated_segment, &segment).is_empty() {
 			return None;
 		}
 
 		// If controlled segment is fully in query range, return it full
 		if Self::contains_range(&segment, &root.curated_segment) {
-			return Some(self[root].clone());
+			return Some((*mapper)(self[root].clone()));
 		}
 
 		// Otherwise, glue answer from left and right queries
-		let children_ranges = SegmentTreeEngine::<RE, RO>::half_split_range(&controlled_segment);
-		let left_result = self.reduce_segment_impl(
-			SegmentTreeEngine::<RE, RO>::left_child_index(tree_index),
-			children_ranges.0,
-			q
+		let left_result = self.reduce_impl(
+			self.node_left_child(&root).unwrap(),
+			segment.clone(), mapper, reducer
 		);
 
-		let right_result = self.reduce_segment_impl(
-			SegmentTreeEngine::<RE, RO>::right_child_index(tree_index),
-			children_ranges.1,
-			q
+		let right_result = self.reduce_impl(
+			self.node_right_child(&root).unwrap(),
+			segment.clone(), mapper, reducer
 		);
 
 		left_result.iter()
 			.chain(right_result.iter()).
 			cloned()
-			.reduce(RO::apply)
+			.reduce(mapper)
 	}
 
-	pub fn reduce(&self, segment: Range<usize>) -> Option<Node> {
-		self.reduce_impl();
+	pub fn reduce<ReductionType, M, R>(
+		&self,
+		segment: Range<usize>,
+		mapper: M,
+		reducer: R
+	) -> Option<ReductionType>
+		where R: FnMut(ReductionType, ReductionType) -> ReductionType, M: FnMut(Node) -> ReductionType
+	{
+		self.reduce_impl(self.root_node(), segment, &mapper, &reducer)
 	}
 
 	pub fn search_traverse<F>(&mut self, visitor: F)
