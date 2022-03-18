@@ -1,9 +1,49 @@
 use std::convert::identity;
 use std::fmt::Debug;
 use super::*;
-
+#[macro_use]
 macro_rules! Engine {
     () => {SegmentTreeEngine::<RE, RO, RE>}
+}
+
+#[derive(Clone, Eq, PartialEq)]
+struct MRSTNode<RE, RO> {
+    reduced: RE,
+    _ro: PhantomData<RO>
+}
+
+
+impl<RE: ReductionElement, RO: ReductionOp<RE>> MRSTNode<RE, RO> {
+    fn new(r: RE) -> MRSTNode<RE, RO> {
+        Self {
+            reduced: r,
+            _ro: Default::default()
+        }
+    }
+
+    fn unwrap(self) -> RE {
+        self.reduced
+    }
+
+    fn map<F>(self, f: F) -> Self
+        where F: Fn(RE) -> RE
+    {
+        Self::new(f(self.unwrap()))
+    }
+
+    fn contexted<F: Fn(RE) -> RE>(f: F) -> impl Fn(Self) -> Self {
+        compose!(Self::unwrap, f, Self::new)
+    }
+
+    fn contexted_two<F: Fn(RE, RE) -> RE>(f: F) -> impl Fn(Self, Self) -> Self {
+        move |l, r| Self::new(f(l.unwrap(), r.unwrap()))
+    }
+}
+
+impl<RE: ReductionElement, RO: ReductionOp<RE>> SegmentTreeNode for MRSTNode<RE, RO> {
+    fn neutral() -> Self {
+        Self::new(RO::neutral())
+    }
 }
 
 pub struct MassReadSegmentTree<
@@ -11,8 +51,8 @@ pub struct MassReadSegmentTree<
     MD: ModificationDescriptor<RE>,
     RO: ReductionOp<RE>
 > {
-    e: SegmentTreeEngine<RE, RO, RE>,
-    _md: MD
+    e: SegmentTreeEngine<RE, RO, MRSTNode<RE, RO>>,
+    _md: PhantomData<MD>
 }
 
 /// Private impls
@@ -29,12 +69,12 @@ impl<
     }
 
 
-    fn reduce_node(&mut self, node: &NodePositionDescriptor) {
-        let left_node = self.e.node_left_child(node);
-        let right_node = self.e.node_right_child(node);
-        self.e[node] = RO::apply(
-            self.e[left_node],
-            self.e[right_node]
+    pub fn reduce_node(&mut self, node: &NodePositionDescriptor) {
+        let left_node = self.e.node_left_child(node).unwrap();
+        let right_node = self.e.node_right_child(node).unwrap();
+        self.e[node] = MRSTNode::contexted_two(RO::apply)(
+            self.e[&left_node].clone(),
+            self.e[&right_node].clone()
         );
         //
         // self.data[parent_index] = RO::apply(
@@ -43,7 +83,6 @@ impl<
         // );
     }
 
-    //
     // fn is_floor_node(&self, node: &NodePositionDescriptor) -> bool {
     //
     // }
@@ -76,7 +115,9 @@ impl<
     /// Update the tower depending on it
     fn modify_element_impl(&mut self, q: &ElementModificationQuery<RE, MD>) {
         let leaf_node = self.e.initial_array_node(q.position);
-        self.e[&leaf_node] = q.mqd.apply(self.e[&leaf_node].clone());
+        self.e[&leaf_node] = MRSTNode::new(
+            q.mqd.apply(self.e[&leaf_node].clone().unwrap())
+        );
 
         self.update_node_reductions_up_from(&leaf_node)
     }
@@ -133,8 +174,8 @@ impl<
     pub fn build(initial_data: &Vec<RE>) -> Self {
         let mut res = Self::fill_neutral(initial_data.len());
 
-        res.e.set_floor(initial_data);
-        res.e.rebuild_from_floor(RO::apply);
+        res.e.set_floor(&initial_data.iter().cloned().map(MRSTNode::new).collect());
+        res.e.rebuild_from_floor(MRSTNode::contexted_two(RO::apply));
 
         // let data_start = SegmentTreeEngine::<RE, RO, RE>::floor_start(res.data.len());
         //
@@ -164,8 +205,9 @@ impl<
     RO: ReductionOp<RE>
 > SegmentReducer<RE, RO> for MassReadSegmentTree<RE, MD, RO> {
     fn reduce_segment(&mut self, q: &SegmentReductionQuery<RE, RO>) -> RE {
-        self.e.reduce(q.segment.clone(), identity, RO::apply)
-            .unwrap_or(RO::neutral())
+        self.e
+            .map_reduce_segment(q.segment.clone(), identity, MRSTNode::contexted_two(RO::apply))
+            .map_or(RO::neutral(), MRSTNode::unwrap)
 
         // self.reduce_segment_impl(
         //     0,
@@ -195,14 +237,30 @@ mod tests {
 
     mod building_tests {
         use crate::segment_tree::{AssignmentModification, MassReadSegmentTree, SumReduction};
+        use crate::segment_tree::mass_read_segment_tree::MRSTNode;
         use crate::segment_tree::mass_read_segment_tree::tests::build;
 
-        fn verify_building(source: Vec<i64>, expected: Vec<i64>) {
+        pub fn get_data(st: &MassReadSegmentTree<
+            i64,
+            AssignmentModification<i64>,
+            SumReduction<i64>
+        >) -> Vec<i64> {
+            st.e.data.iter().cloned().map(MRSTNode::unwrap).collect()
+        }
+
+        pub fn compare_data(st: &MassReadSegmentTree<
+            i64,
+            AssignmentModification<i64>,
+            SumReduction<i64>
+        >, data: Vec<i64>) -> bool {
+            get_data(st) == data
+        }
+
+        pub fn verify_building(source: Vec<i64>, expected: Vec<i64>) {
             let tree =
                 build(source);
 
-            assert_eq!(tree.data, expected);
-
+            assert_eq!(get_data(&tree), expected);
         }
 
         #[test]
@@ -225,26 +283,27 @@ mod tests {
     mod modifying_tests {
         use crate::segment_tree::{AssignmentModification, ElementModificationQuery, ElementModifier};
         use crate::segment_tree::mass_read_segment_tree::tests::build;
+        use crate::segment_tree::mass_read_segment_tree::tests::building_tests::get_data;
 
         #[test]
         fn modifying_test() {
             let mut tree = build(vec![1, 2, 3]);
             tree.modify_element(&ElementModificationQuery::new(
                 1,
-                AssignmentModification{assigned_value: 10}
+                AssignmentModification::AssignedValue(10)
             ));
 
-            assert_eq!(tree.data, build(vec![1, 10, 3]).data);
+            assert_eq!(get_data(&tree), get_data(&build(vec![1, 10, 3])));
 
             tree.modify_element(&ElementModificationQuery::new(
                 0,
-                AssignmentModification{assigned_value: 42}
+                AssignmentModification::assign(42)
             ));
             tree.modify_element(&ElementModificationQuery::new(
                 2,
-                AssignmentModification{assigned_value: -566}
+                AssignmentModification::assign(-566)
             ));
-            assert_eq!(tree.data, build(vec![42, 10, -566]).data);
+            assert_eq!(get_data(&tree), get_data(&build(vec![42, 10, -566])));
         }
     }
 

@@ -26,7 +26,7 @@ pub enum ChildnessType {
 
 /// May contain only reduction information or may be also pending modification queries, for example.
 /// Its content depends on implementation details of particular segment tree
-pub trait SegmentTreeNode {
+pub trait SegmentTreeNode: Clone {
 	fn neutral() -> Self;
 }
 
@@ -53,7 +53,7 @@ pub trait SegmentTreeNode {
 /// The whole variety of traversals can be represented as top-to-down descent with predicates (with some standard presets).
 /// But recursion can be optimized out for some special cases
 pub struct SegmentTreeEngine<RE: ReductionElement, RO: ReductionOp<RE>, Node> {
-	data: Vec<Node>,
+	pub(crate) data: Vec<Node>,
 	_re: PhantomData<RE>,
 	_ro: PhantomData<RO>
 }
@@ -107,11 +107,11 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 	}
 
 	pub fn array_size(&self) -> usize {
-		self.data.size() / 2
+		self.data.len() / 2
 	}
 
 	pub fn floor_start(&self) -> usize {
-		self.data.size() / 2 - 1
+		self.data.len() / 2 - 1
 	}
 
 	pub fn initial_element_tree_index(&self, initial_index: usize) -> usize {
@@ -129,11 +129,11 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 	// {
 	// 	if self.parent
 	// }
-	pub fn reduce_impl<ReductionType, M, R>(
+	pub fn reduce_impl<ReductionType: Clone, M, R>(
 		&self,
 		root: NodePositionDescriptor,
 		segment: Range<usize>,
-		mapper: &M,
+		mapper: &mut M,
 	    reducer: &R
 	) -> Option<ReductionType>
 		where R: FnMut(ReductionType, ReductionType) -> ReductionType, M: FnMut(Node) -> ReductionType
@@ -144,7 +144,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 
 		// If controlled segment is fully in query range, return it full
 		if Self::contains_range(&segment, &root.curated_segment) {
-			return Some((*mapper)(self[root].clone()));
+			return Some((*mapper)(self[&root].clone()));
 		}
 
 		// Otherwise, glue answer from left and right queries
@@ -161,10 +161,10 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		left_result.iter()
 			.chain(right_result.iter())
 			.cloned()
-			.reduce(mapper)
+			.reduce(reducer.clone())
 	}
 
-	pub fn reduce<ReductionType, M, R>(
+	pub fn map_reduce_segment<ReductionType: Clone, M, R>(
 		&self,
 		segment: Range<usize>,
 		mapper: M,
@@ -172,7 +172,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 	) -> Option<ReductionType>
 		where R: FnMut(ReductionType, ReductionType) -> ReductionType, M: FnMut(Node) -> ReductionType
 	{
-		self.reduce_impl(self.root_node(), segment, &mapper, &reducer)
+		self.reduce_impl(self.root_node(), segment, &mut mapper, &reducer)
 	}
 
 	pub fn search_traverse<F>(&mut self, visitor: F) -> usize
@@ -253,7 +253,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		// To get parent's range, we need to combine self with sibling (left or right)
 		let parent_index = Self::parent_index(node.tree_index)?;
 
-		let node_range_size = node.curated_segment.();
+		let node_range_size = Self::range_size(&node.curated_segment);
 		let parent_range = match self.childness_type(node) {
 			ChildnessType::LeftChild => node.curated_segment.start..node.curated_segment.end + node_range_size,
 			ChildnessType::RightChild => node.curated_segment.start - node_range_size..node.curated_segment.end
@@ -324,7 +324,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 	pub fn decompose_into_segments(&self, range: Range<usize>) -> Vec<NodePositionDescriptor> {
 		let mut accumulator = Vec::new();
 
-		self.decompose_into_segments_impl(range, );
+		// self.decompose_into_segments_impl(range, );
 
 		accumulator
 	}

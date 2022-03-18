@@ -17,6 +17,6 @@ impl<
 	RO: ReductionOp<RE>
 > MassWriteSegmentTree<RE, MD, RO> {
 	pub fn build(initial_data: &Vec<RE>) -> Self {
-
+		todo!()
 	}
 }

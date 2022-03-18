@@ -1,6 +1,7 @@
 use super::*;
 
 
+#[derive(Clone)]
 pub struct SumReduction<T: From<i64> + Add<Output=T>> { _t: PhantomData<T> }
 
 impl<T: From<i64> + Add<Output=T> + ReductionElement> ReductionOp<T> for SumReduction<T> {
@@ -14,14 +15,31 @@ impl<T: From<i64> + Add<Output=T> + ReductionElement> ReductionOp<T> for SumRedu
 }
 
 #[derive(Clone, Debug)]
-pub struct AssignmentModification<RE: ReductionElement> {
-    pub assigned_value: RE
+pub enum AssignmentModification<RE: ReductionElement> {
+    AssignedValue(RE),
+    Identity
 }
 
+impl<RE: ReductionElement> AssignmentModification<RE> {
+    pub fn assign(value: RE) -> AssignmentModification<RE> {
+        AssignmentModification::AssignedValue(value)
+    }
+}
 
 impl<RE: ReductionElement> ModificationDescriptor<RE> for AssignmentModification<RE> {
-    fn apply(&self, _argument: RE) -> RE {
-        self.assigned_value.clone()
+    fn identity() -> Self {
+        Self::Identity
+    }
+
+    fn apply(&self, argument: RE) -> RE {
+        match self {
+            AssignmentModification::AssignedValue(v) => {
+                v.clone()
+            }
+            AssignmentModification::Identity => {
+                argument
+            }
+        }
     }
 }
 
@@ -34,6 +52,10 @@ pub enum SegmentAdditionAssignment {
 impl ReductionElement for i64 {}
 
 impl ModificationDescriptor<i64> for SegmentAdditionAssignment {
+    fn identity() -> Self {
+        Self::Addition(0)
+    }
+
     fn apply(&self, argument: i64) -> i64 {
         match self {
             Self::Addition(v) => argument + *v,
