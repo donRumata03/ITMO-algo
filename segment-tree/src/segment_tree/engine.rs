@@ -133,10 +133,10 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		&self,
 		root: NodePositionDescriptor,
 		segment: Range<usize>,
-		mapper: &mut M,
+		mapper: &M,
 	    reducer: &R
 	) -> Option<ReductionType>
-		where R: FnMut(ReductionType, ReductionType) -> ReductionType, M: FnMut(Node) -> ReductionType
+		where R: Fn(ReductionType, ReductionType) -> ReductionType, M: Fn(Node) -> ReductionType
 	{
 		if Self::intersect_ranges(&root.curated_segment, &segment).is_empty() {
 			return None;
@@ -161,7 +161,7 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		left_result.iter()
 			.chain(right_result.iter())
 			.cloned()
-			.reduce(reducer.clone())
+			.reduce(|rl, rr| reducer(rl, rr))
 	}
 
 	pub fn map_reduce_segment<ReductionType: Clone, M, R>(
@@ -170,9 +170,9 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 		mapper: M,
 		reducer: R
 	) -> Option<ReductionType>
-		where R: FnMut(ReductionType, ReductionType) -> ReductionType, M: FnMut(Node) -> ReductionType
+		where R: Fn(ReductionType, ReductionType) -> ReductionType, M: Fn(Node) -> ReductionType
 	{
-		self.reduce_impl(self.root_node(), segment, &mut mapper, &reducer)
+		self.reduce_impl(self.root_node(), segment, &mapper, &reducer)
 	}
 
 	pub fn search_traverse<F>(&mut self, visitor: F) -> usize
@@ -285,7 +285,8 @@ impl<RE: ReductionElement, RO: ReductionOp<RE>, Node: SegmentTreeNode> SegmentTr
 	}
 
 	pub fn set_floor(&mut self, array: &Vec<Node>) {
-		self.data[self.floor_range()].clone_from_slice(array);
+		let fr = self.floor_range();
+		self.data[fr].clone_from_slice(array);
 	}
 
 	pub fn rebuild_from_floor<F>(&mut self, combiner: F)
