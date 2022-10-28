@@ -1,14 +1,6 @@
-//! ```cargo
-//! [dependencies]
-//! petgraph = "*"
-//! ```
-
-// TopSort using petgraph library
 use petgraph::prelude::*;
 use petgraph::algo::{is_cyclic_directed, toposort};
 use petgraph::visit::{DfsPostOrder, Topo};
-
-
 use {
     std::{
         io::{
@@ -38,18 +30,13 @@ use std::fmt::Formatter;
 use std::collections::hash_map::Entry;
 use petgraph::adj::DefaultIx;
 use petgraph::graph;
-
-
-/// Writer
 pub struct OutputWriter<W: Write> {
     writer: W,
     buf: Vec<u8>,
 }
-
 impl OutputWriter<Stdout> {
     pub fn new() -> Self { Self::from_writer(io::stdout()) }
 }
-
 impl OutputWriter<File> {
     pub fn from_file(path: &str) -> Self {
         let file = OpenOptions::new()
@@ -59,32 +46,26 @@ impl OutputWriter<File> {
         Self::from_writer(file.unwrap())
     }
 }
-
 impl<W: Write> OutputWriter<W> {
     pub fn from_writer(writer: W) -> Self {
         let buf = Vec::with_capacity(1 << 16);
         Self { writer, buf }
     }
-
     pub fn print<T: Display>(&mut self, t: T) {
         write!(self, "{}", t).unwrap();
     }
-
     pub fn prints<T: Display>(&mut self, t: T) {
         write!(self, "{} ", t).unwrap();
     }
-
     pub fn println<T: Display>(&mut self, t: T) {
         writeln!(self, "{}", t).unwrap();
     }
 }
-
 impl<W: Write> Write for OutputWriter<W> {
     fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
         self.buf.extend(bytes);
         Ok(bytes.len())
     }
-
     fn flush(&mut self) -> std::io::Result<()> {
         self.writer.write_all(&self.buf)?;
         self.writer.flush()?;
@@ -92,40 +73,30 @@ impl<W: Write> Write for OutputWriter<W> {
         Ok(())
     }
 }
-
 impl<W: Write> Drop for OutputWriter<W> {
     fn drop(&mut self) { self.flush().unwrap(); }
 }
-
 macro_rules! EOF {
-    // `()` indicates that the macro takes no argument.
     () => {
-        // The macro will expand into the contents of this block.
         "InputReader: Reached end of input!"
     };
 }
-
-// const EOF: &'static str = ;
-
 pub struct InputReader<R: Read> {
     reader: R,
     buf: Vec<u8>,
     bytes_read: usize,
     current_index: usize,
 }
-
 impl InputReader<Stdin> {
     pub fn new() -> Self {
         Self::from_reader(io::stdin())
     }
 }
-
 impl InputReader<File> {
     pub fn from_file(path: &str) -> Self {
         Self::from_reader(File::open(path).unwrap())
     }
 }
-
 impl<R: Read> InputReader<R> {
     pub fn from_reader(reader: R) -> Self {
         Self {
@@ -135,11 +106,9 @@ impl<R: Read> InputReader<R> {
             current_index: 0,
         }
     }
-
     pub fn next<T: InputReadable>(&mut self) -> T {
         T::from_input(self)
     }
-
     pub fn next_line(&mut self) -> String {
         assert!(self.has_more(), EOF!());
         let mut line = String::new();
@@ -151,7 +120,6 @@ impl<R: Read> InputReader<R> {
         self.consume(); // consume '\n'
         line
     }
-
     pub fn has_more(&mut self) -> bool {
         if self.current_index >= self.bytes_read {
             self.bytes_read = self.reader.read(&mut self.buf[..]).unwrap();
@@ -159,21 +127,16 @@ impl<R: Read> InputReader<R> {
         }
         self.bytes_read > 0
     }
-
     pub fn set_buf_size(&mut self, buf_size: usize) {
         self.buf.resize(buf_size, 0);
     }
-
     fn peek(&self) -> char { self.buf[self.current_index] as char }
-
     fn consume(&mut self) { self.current_index += 1; }
-
     fn pop_digit(&mut self) -> u64 {
         let c = self.peek();
         self.consume();
         c as u64 - '0' as u64
     }
-
     fn consume_until<F: Fn(char) -> bool>(&mut self, test: F) {
         loop {
             assert!(self.has_more(), EOF!());
@@ -181,23 +144,19 @@ impl<R: Read> InputReader<R> {
             self.consume();
         }
     }
-
     fn consume_until_sign(&mut self) -> i64 {
         loop {
             self.consume_until(|c| c.is_ascii_digit() || c == '-');
             if self.peek() != '-' { return 1; }
-
             self.consume();
             assert!(self.has_more(), EOF!());
             if self.peek().is_ascii_digit() { return -1; }
         }
     }
 }
-
 pub trait InputReadable {
     fn from_input<R: Read>(input: &mut InputReader<R>) -> Self;
 }
-
 impl InputReadable for u64 {
     fn from_input<R: Read>(input: &mut InputReader<R>) -> Self {
         input.consume_until(|c| c.is_ascii_digit());
@@ -209,14 +168,12 @@ impl InputReadable for u64 {
         num
     }
 }
-
 impl InputReadable for i64 {
     fn from_input<R: Read>(input: &mut InputReader<R>) -> Self {
         let sign = input.consume_until_sign();
         u64::from_input(input) as i64 * sign
     }
 }
-
 impl InputReadable for f64 {
     fn from_input<R: Read>(input: &mut InputReader<R>) -> Self {
         let sign = input.consume_until_sign() as f64;
@@ -225,7 +182,6 @@ impl InputReadable for f64 {
             num = num * 10.0 + input.pop_digit() as f64;
             if !input.has_more() { break; }
         }
-
         let mut factor = 1.0;
         if input.peek() == '.' {
             input.consume();
@@ -237,7 +193,6 @@ impl InputReadable for f64 {
         sign * num / factor
     }
 }
-
 impl InputReadable for String {
     fn from_input<R: Read>(input: &mut InputReader<R>) -> Self {
         input.consume_until(|c| c.is_ascii_graphic());
@@ -250,7 +205,6 @@ impl InputReadable for String {
         word
     }
 }
-
 impl InputReadable for char {
     fn from_input<R: Read>(input: &mut InputReader<R>) -> Self {
         input.consume_until(|c| c.is_ascii_graphic());
@@ -259,7 +213,6 @@ impl InputReadable for char {
         c
     }
 }
-
 macro_rules! impl_readable_from {
   ($A:ty, [$($T:ty),+]) => {
     $(impl InputReadable for $T {
@@ -272,45 +225,29 @@ macro_rules! impl_readable_from {
 impl_readable_from!{ u64, [u32, u16, u8, usize] }
 impl_readable_from!{ i64, [i32, i16, i8, isize] }
 impl_readable_from!{ f64, [f32] }
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 fn main() {
-    // Input graph from command line
     let mut graph = Graph::<(), (), Directed>::new();
-
     let mut input = InputReader::new();
     let mut output = OutputWriter::new();
-
     let n: usize = input.next();
     let m: usize = input.next();
-
-    // Add nodes with id 0..n
     for _ in 0..n {
         graph.add_node(());
     }
-
-    // Read m edges and add them to the graph
     for _ in 0..m {
         let u: usize = input.next();
         let v: usize = input.next();
         graph.add_edge(NodeIndex::new(u - 1), NodeIndex::new(v - 1), ());
     }
-
-    // Check if the graph contains a cycle
     if is_cyclic_directed(&graph) {
         println!("{}", -1);
         return;
     }
-
-
-    // Run top sort on the graph
     let mut top_sort = Topo::new(&graph);
     let mut sorted_nodes = Vec::new();
     while let Some(node) = top_sort.next(&graph) {
         sorted_nodes.push(node.index());
     }
-    // Print the sorted nodes
     for node in sorted_nodes {
         output.print(node + 1);
         output.print(" ");
