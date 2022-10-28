@@ -1,9 +1,3 @@
-// TopSort using petgraph library
-use petgraph::prelude::*;
-use petgraph::algo::{is_cyclic_directed, toposort};
-use petgraph::visit::{DfsPostOrder, Topo};
-
-
 use {
 	std::{
 		io::{
@@ -31,8 +25,6 @@ use std::io::{BufRead, repeat};
 use std::iter::Sum;
 use std::fmt::Formatter;
 use std::collections::hash_map::Entry;
-use petgraph::adj::DefaultIx;
-use petgraph::graph;
 
 
 /// Writer
@@ -270,44 +262,94 @@ impl_readable_from!{ f64, [f32] }
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+enum VisitColor {
+	White,
+	Gray,
+	Black,
+}
+
+
 fn main() {
-	// Input graph from command line
-	let mut graph = Graph::<(), (), Directed>::new();
+	// Without external libraries
+	let mut graph = Vec::new();
+
 
 	let mut input = InputReader::new();
-	let mut output = OutputWriter::new();
+	// let mut output = OutputWriter::new();
 
 	let n: usize = input.next();
 	let m: usize = input.next();
 
 	// Add nodes with id 0..n
 	for _ in 0..n {
-		graph.add_node(());
+		graph.push(Vec::new());
 	}
 
 	// Read m edges and add them to the graph
 	for _ in 0..m {
 		let u: usize = input.next();
 		let v: usize = input.next();
-		graph.add_edge(NodeIndex::new(u - 1), NodeIndex::new(v - 1), ());
+		graph[u - 1].push(v - 1);
 	}
 
 	// Check if the graph contains a cycle
-	if is_cyclic_directed(&graph) {
-		println!("{}", -1);
+	fn dfs_visit(graph: &Vec<Vec<usize>>, u: usize, color: &mut Vec<VisitColor>) -> bool {
+		color[u] = VisitColor::Gray;
+		for &v in &graph[u] {
+			match color[v] {
+				VisitColor::White => {
+					if dfs_visit(graph, v, color) {
+						return true;
+					}
+				}
+				VisitColor::Gray => {
+					return true;
+				}
+				VisitColor::Black => {}
+			}
+		}
+		color[u] = VisitColor::Black;
+		false
+	}
+
+	let mut vertex_color = vec![VisitColor::White; n];
+	let mut cycle_found = false;
+	for u in 0..n {
+		if vertex_color[u] == VisitColor::White {
+			cycle_found |= dfs_visit(&graph, u, &mut vertex_color);
+		}
+	}
+	// If a cycle was found, the graph is not a DAG, return early
+	if cycle_found {
+		println!("-1");
 		return;
 	}
 
-
 	// Run top sort on the graph
-	let mut top_sort = Topo::new(&graph);
-	let mut sorted_nodes = Vec::new();
-	while let Some(node) = top_sort.next(&graph) {
-		sorted_nodes.push(node.index());
+	let mut top_sort = Vec::new();
+	let mut vertex_color = vec![VisitColor::White; n];
+	fn dfs_visit_top_sort(graph: &Vec<Vec<usize>>, u: usize, color: &mut Vec<VisitColor>, top_sort: &mut Vec<usize>) {
+		color[u] = VisitColor::Gray;
+		for &v in &graph[u] {
+			if color[v] == VisitColor::White {
+				dfs_visit_top_sort(graph, v, color, top_sort);
+			}
+		}
+		color[u] = VisitColor::Black;
+		top_sort.push(u);
 	}
+	for u in 0..n {
+		if vertex_color[u] == VisitColor::White {
+			dfs_visit_top_sort(&graph, u, &mut vertex_color, &mut top_sort);
+		}
+	}
+	top_sort.reverse();
+
+
 	// Print the sorted nodes
-	for node in sorted_nodes {
-		output.print(node + 1);
-		output.print(" ");
+	for &u in &top_sort {
+		print!("{} ", u + 1);
 	}
+	println!();
 }
