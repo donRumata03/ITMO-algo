@@ -69,6 +69,17 @@ impl Graph {
 	pub fn edges(&self) -> usize {
 		self.total_edges
 	}
+
+	pub fn remove_edges(&mut self, edges: &[usize]) {
+		let mut removed_edges = vec![false; self.total_edges];
+		for edge in edges {
+			removed_edges[*edge] = true;
+		}
+		for edges in &mut self.edges {
+			edges.retain(|edge| !removed_edges[edge.edge_index]);
+		}
+		self.total_edges -= edges.len();
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -77,6 +88,7 @@ pub struct DFSSpace {
 	pub visit_colors: Vec<VisitColor>,
 	pub t_in: Vec<usize>,
 	pub t_out: Vec<usize>,
+	pub children: Vec<Vec<usize>>,
 }
 
 impl DFSSpace {
@@ -87,6 +99,21 @@ impl DFSSpace {
 			visit_colors: vec![VisitColor::White; n],
 			t_in: vec![0; n],
 			t_out: vec![0; n],
+			children: vec![Vec::new(); n],
+		}
+	}
+
+	pub fn clear(&mut self) {
+		self.time = 0;
+		self.visit_colors.fill(VisitColor::White);
+		self.t_in.fill(0);
+		self.t_out.fill(0);
+		self.children.fill(Vec::new());
+	}
+
+	pub fn ignore_vertexes(&mut self, vertexes: &[usize]) {
+		for &vertex in vertexes {
+			self.visit_colors[vertex] = VisitColor::Black;
 		}
 	}
 
@@ -175,4 +202,55 @@ impl DFSSpace {
 		self.visit_colors[node] = VisitColor::Black;
 	}
 
+	pub fn find_cutting_points(&mut self, graph: &Graph) -> Vec<usize> { // List of indexes of vertexes that are cutting points
+		let mut cutting_points = Vec::new();
+		let mut highest_reachable = vec![0; graph.vertexes()];
+		for v in 0..graph.vertexes() {
+			if self.visit_colors[v] == VisitColor::White {
+				self.cutting_point_dfs(v, graph, &mut cutting_points, &mut highest_reachable, None);
+			}
+		}
+		cutting_points.sort();
+		cutting_points.dedup();
+
+		// dbg!(self);
+		// dbg!(highest_reachable);
+
+
+		cutting_points
+	}
+
+	fn cutting_point_dfs(&mut self, node: usize, graph: &Graph, cutting_points: &mut Vec<usize>, highest_reachable: &mut Vec<usize>, edge_to_parent: Option<Edge>) {
+		self.visit_colors[node] = VisitColor::Gray;
+		self.t_in[node] = self.time;
+		highest_reachable[node] = self.time;
+		self.time += 1;
+
+		for edge in &graph.edges[node] {
+			let to = edge.to;
+			// Continue if to is a parent
+			if edge_to_parent.is_some() && edge_to_parent.unwrap().to == to {
+				continue;
+			}
+			if self.visit_colors[to] == VisitColor::White {
+				self.cutting_point_dfs(to, graph, cutting_points, highest_reachable, Some(Edge { to: node, edge_index: edge.edge_index }));
+				highest_reachable[node] = min(highest_reachable[node], highest_reachable[to]);
+				if edge_to_parent.is_some() && highest_reachable[to] >= self.t_in[node] {
+					cutting_points.push(node);
+				}
+				self.children[node].push(to);
+			} else if self.visit_colors[to] == VisitColor::Gray {
+				// upper edge from node itself
+				highest_reachable[node] = min(highest_reachable[node], self.t_in[to]);
+			}
+		}
+
+		if edge_to_parent.is_none() {
+			if self.children[node].len() > 1 {
+				cutting_points.push(node);
+			}
+		}
+
+		self.visit_colors[node] = VisitColor::Black;
+	}
 }
