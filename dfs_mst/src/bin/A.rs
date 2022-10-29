@@ -24,16 +24,17 @@ fn main() {
 
 	let mut dfs_space = crate::DFSSpace::new(&graph);
 	let mut top_sort = dfs_space.topological_sort(&graph);
-	top_sort.reverse();
 
-
-	// Print the sorted nodes
-	println!("{}", top_sort
-		.iter()
-		.map(|&x| (x + 1).to_string())
-		.collect::<Vec<_>>()
-		.join(" ")
-	);
+	if let Some(top_sort) = top_sort {
+		println!("{}", top_sort
+			.iter()
+			.map(|&x| (x + 1).to_string())
+			.collect::<Vec<_>>()
+			.join(" ")
+		);
+	} else {
+		println!("{}", -1);
+	}
 }
 
 /*
