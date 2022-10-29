@@ -10,8 +10,8 @@ pub enum VisitColor {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Edge {
-	to: usize,
-	edge_index: usize,
+	pub to: usize,
+	pub edge_index: usize,
 }
 
 // Graph as an adjacency list
@@ -27,6 +27,22 @@ impl Graph {
 			edges: vec![Vec::new(); n],
 			total_edges: 0,
 		}
+	}
+
+	pub fn from_stdin(input_reader: &mut InputReader<Stdin>, directed: bool) -> Self {
+		let n = input_reader.next::<usize>();
+		let m = input_reader.next::<usize>();
+		let mut graph = Graph::new(n);
+		for _ in 0..m {
+			let from = input_reader.next::<usize>();
+			let to = input_reader.next::<usize>();
+			if directed {
+				graph.add_directed_edge(from - 1, to - 1);
+			} else {
+				graph.add_undirected_edge(from - 1, to - 1);
+			}
+		}
+		graph
 	}
 
 	pub fn add_indexed_directed_edge(&mut self, from: usize, to: usize, edge_index: usize) {
@@ -78,7 +94,7 @@ impl DFSSpace {
 		let mut order = Vec::new();
 		for v in 0..graph.vertexes() {
 			if self.visit_colors[v] == VisitColor::White {
-				self.dfs(graph, v, &mut order);
+				self.topsort_dfs(graph, v, &mut order);
 			}
 		}
 		order.reverse();
@@ -89,14 +105,14 @@ impl DFSSpace {
 		}
 	}
 
-	fn dfs(&mut self, graph: &Graph, v: usize, order: &mut Vec<usize>) {
+	fn topsort_dfs(&mut self, graph: &Graph, v: usize, order: &mut Vec<usize>) {
 		self.visit_colors[v] = VisitColor::Gray;
 		self.t_in[v] = self.time;
 		self.time += 1;
 		for edge in &graph.edges[v] {
 			let to = edge.to;
 			if self.visit_colors[to] == VisitColor::White {
-				self.dfs(graph, to, order);
+				self.topsort_dfs(graph, to, order);
 			} else if self.visit_colors[to] == VisitColor::Gray {
 				// Cycle detected
 				return;
@@ -107,4 +123,56 @@ impl DFSSpace {
 		self.time += 1;
 		order.push(v);
 	}
+
+	pub fn test_acyclic(&mut self, graph: &Graph) -> bool {
+		self.topological_sort(graph).is_some()
+	}
+
+	pub fn find_bridges(&mut self, graph: &Graph) -> Vec<usize> { // List of edge indexes of bridges
+		let mut bridges = Vec::new();
+		let mut highest_reachable = vec![0; graph.vertexes()];
+		for v in 0..graph.vertexes() {
+			if self.visit_colors[v] == VisitColor::White {
+				self.bridge_dfs(v, graph, &mut bridges, &mut highest_reachable, None);
+			}
+		}
+		bridges
+	}
+
+	fn bridge_dfs(&mut self, node: usize, graph: &Graph, bridges: &mut Vec<usize>, highest_reachable: &mut Vec<usize>, edge_to_parent: Option<Edge>) {
+		self.visit_colors[node] = VisitColor::Gray;
+		self.t_in[node] = self.time;
+		highest_reachable[node] = self.time;
+		self.time += 1;
+
+		for edge in &graph.edges[node] {
+			let to = edge.to;
+			if self.visit_colors[to] == VisitColor::White {
+				self.bridge_dfs(to, graph, bridges, highest_reachable, Some(Edge { to: node, edge_index: edge.edge_index }));
+				highest_reachable[node] = min(highest_reachable[node], highest_reachable[to]);
+			} else if self.visit_colors[to] == VisitColor::Gray {
+				// upper edge from node itself (handle parent separately)
+				match edge_to_parent {
+					Some(parent_edge) => {
+						if parent_edge.to != to {
+							highest_reachable[node] = min(highest_reachable[node], self.t_in[to]);
+						}
+					},
+					None => highest_reachable[node] = min(highest_reachable[node], self.t_in[to]),
+				}
+			}
+		}
+
+		// If the node is not the root of the dfs tree and in the subtree there is an edge to a node that is higher in the dfs tree,
+		// then the edge is not a bridge
+		// Root of the dfs tree doesn't have any edges «associated» with it
+		match edge_to_parent {
+			Some(Edge { to: _parent, edge_index }) if highest_reachable[node] == self.t_in[node] => {
+				bridges.push(edge_index);
+			}, _ => {}
+		}
+
+		self.visit_colors[node] = VisitColor::Black;
+	}
+
 }
