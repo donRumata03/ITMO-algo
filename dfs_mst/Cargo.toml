@@ -2,10 +2,6 @@
 name = "dfs_mst"
 version = "0.1.0"
 edition = "2021"
-build = "build.rs"
 
 [dependencies]
 petgraph = "0.6.*"
-
-[build-dependencies]
-rustsourcebundler = { git = "https://github.com/lpenz/rust-sourcebundler" }
