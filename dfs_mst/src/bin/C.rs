@@ -1,4 +1,6 @@
 
-fn main() {
+fn data() {}
 
+fn main() {
+	println!("Hello, world!");
 }
