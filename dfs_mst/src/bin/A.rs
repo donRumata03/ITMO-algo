@@ -1,3 +1,5 @@
+extern crate dfs_mst;
+
 use dfs_mst::{
 	Graph,
 	DFSSpace,
