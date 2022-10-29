@@ -117,6 +117,35 @@ impl DFSSpace {
 		}
 	}
 
+	pub fn dfs_preorder_with<F>(&mut self, graph: &Graph, v: usize, run_for_vertex: &mut F)
+		where F: FnMut(usize)
+	{
+		self.visit_colors[v] = VisitColor::Gray;
+		run_for_vertex(v);
+
+		for edge in &graph.edges[v] {
+			let to = edge.to;
+			if self.visit_colors[to] == VisitColor::White {
+				self.dfs_preorder_with(graph, to, run_for_vertex);
+			}
+		}
+		self.visit_colors[v] = VisitColor::Black;
+	}
+
+
+	pub fn find_connected_components(&mut self, graph: &Graph) -> Vec<Vec<usize>> {
+		let mut components = Vec::new();
+		for vertex in 0..graph.vertexes() {
+			if self.visit_colors[vertex] == VisitColor::White {
+				components.push(Vec::new());
+				self.dfs_preorder_with(
+					graph, vertex, &mut |vertex| components.last_mut().unwrap().push(vertex)
+				);
+			}
+		}
+		components
+	}
+
 	pub fn topological_sort(&mut self, graph: &Graph) -> Option<Vec<usize>> {
 		let mut order = Vec::new();
 		for v in 0..graph.vertexes() {
@@ -213,10 +242,6 @@ impl DFSSpace {
 		cutting_points.sort();
 		cutting_points.dedup();
 
-		// dbg!(self);
-		// dbg!(highest_reachable);
-
-
 		cutting_points
 	}
 
@@ -253,4 +278,13 @@ impl DFSSpace {
 
 		self.visit_colors[node] = VisitColor::Black;
 	}
+}
+
+pub fn find_edge_biconnected_components(mut graph: Graph) -> Vec<Vec<usize>> {
+	let mut dfs_space = DFSSpace::new(&graph);
+	let bridges = dfs_space.find_bridges(&mut graph);
+
+	graph.remove_edges(&bridges);
+
+	DFSSpace::new(&graph).find_connected_components(&graph)
 }
