@@ -262,88 +262,125 @@ impl_readable_from!{ f64, [f32] }
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum VisitColor {
 	White,
 	Gray,
 	Black,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct Edge {
+	to: usize,
+	edge_index: usize,
+}
+
+// Graph as an adjacency list
+#[derive(Debug, Clone)]
+struct Graph {
+	edges: Vec<Vec<Edge>>,
+	total_edges: usize,
+}
+
+impl Graph {
+	fn new(n: usize) -> Self {
+		Graph {
+			edges: vec![Vec::new(); n],
+			total_edges: 0,
+		}
+	}
+
+	fn add_indexed_directed_edge(&mut self, from: usize, to: usize, edge_index: usize) {
+		self.edges[from].push(Edge { to, edge_index });
+	}
+
+	fn add_undirected_edge(&mut self, from: usize, to: usize) {
+		let edge_index = self.total_edges;
+		self.add_indexed_directed_edge(from, to, edge_index);
+		self.add_indexed_directed_edge(to, from, edge_index);
+		self.total_edges += 1;
+	}
+
+	fn add_directed_edge(&mut self, from: usize, to: usize) {
+		let edge_index = self.total_edges;
+		self.add_indexed_directed_edge(from, to, edge_index);
+		self.total_edges += 1;
+	}
+
+	fn vertexes(&self) -> usize {
+		self.edges.len()
+	}
+
+	fn edges(&self) -> usize {
+		self.total_edges
+	}
+}
+
+#[derive(Debug, Clone)]
+struct DFSSpace {
+	time: usize,
+	visit_colors: Vec<VisitColor>,
+	t_in: Vec<usize>,
+	t_out: Vec<usize>,
+}
+
+impl DFSSpace {
+	fn new(graph: &Graph) -> Self {
+		let n = graph.vertexes();
+		DFSSpace {
+			time: 0,
+			visit_colors: vec![VisitColor::White; n],
+			t_in: vec![0; n],
+			t_out: vec![0; n],
+		}
+	}
+
+	fn topological_sort(&mut self, graph: &Graph) -> Vec<usize> {
+		let mut order = Vec::new();
+		for v in 0..graph.vertexes() {
+			if self.visit_colors[v] == VisitColor::White {
+				self.dfs(graph, v, &mut order);
+			}
+		}
+		order
+	}
+
+	fn dfs(&mut self, graph: &Graph, v: usize, order: &mut Vec<usize>) {
+		self.visit_colors[v] = VisitColor::Gray;
+		self.t_in[v] = self.time;
+		self.time += 1;
+		for edge in &graph.edges[v] {
+			let to = edge.to;
+			if self.visit_colors[to] == VisitColor::White {
+				self.dfs(graph, to, order);
+			}
+		}
+		self.visit_colors[v] = VisitColor::Black;
+		self.t_out[v] = self.time;
+		self.time += 1;
+		order.push(v);
+	}
+}
+
 
 fn main() {
-	// Without external libraries
-	let mut graph = Vec::new();
-
-
 	let mut input = InputReader::new();
 	// let mut output = OutputWriter::new();
 
 	let n: usize = input.next();
 	let m: usize = input.next();
 
-	// Add nodes with id 0..n
-	for _ in 0..n {
-		graph.push(Vec::new());
-	}
+	let mut graph = Graph::new(n);
 
 	// Read m edges and add them to the graph
 	for _ in 0..m {
 		let u: usize = input.next();
 		let v: usize = input.next();
-		graph[u - 1].push(v - 1);
+		graph.add_directed_edge(u - 1, v - 1);
 	}
 
-	// Check if the graph contains a cycle
-	fn dfs_visit(graph: &Vec<Vec<usize>>, u: usize, color: &mut Vec<VisitColor>) -> bool {
-		color[u] = VisitColor::Gray;
-		for &v in &graph[u] {
-			match color[v] {
-				VisitColor::White => {
-					if dfs_visit(graph, v, color) {
-						return true;
-					}
-				}
-				VisitColor::Gray => {
-					return true;
-				}
-				VisitColor::Black => {}
-			}
-		}
-		color[u] = VisitColor::Black;
-		false
-	}
-
-	let mut vertex_color = vec![VisitColor::White; n];
-	let mut cycle_found = false;
-	for u in 0..n {
-		if vertex_color[u] == VisitColor::White {
-			cycle_found |= dfs_visit(&graph, u, &mut vertex_color);
-		}
-	}
-	// If a cycle was found, the graph is not a DAG, return early
-	if cycle_found {
-		println!("-1");
-		return;
-	}
-
-	// Run top sort on the graph
-	let mut top_sort = Vec::new();
-	let mut vertex_color = vec![VisitColor::White; n];
-	fn dfs_visit_top_sort(graph: &Vec<Vec<usize>>, u: usize, color: &mut Vec<VisitColor>, top_sort: &mut Vec<usize>) {
-		color[u] = VisitColor::Gray;
-		for &v in &graph[u] {
-			if color[v] == VisitColor::White {
-				dfs_visit_top_sort(graph, v, color, top_sort);
-			}
-		}
-		color[u] = VisitColor::Black;
-		top_sort.push(u);
-	}
-	for u in 0..n {
-		if vertex_color[u] == VisitColor::White {
-			dfs_visit_top_sort(&graph, u, &mut vertex_color, &mut top_sort);
-		}
-	}
+	let mut dfs_space = DFSSpace::new(&graph);
+	let mut top_sort = dfs_space.topological_sort(&graph);
 	top_sort.reverse();
 
 
@@ -353,3 +390,21 @@ fn main() {
 	}
 	println!();
 }
+
+/*
+1>2
+3>2
+4>2
+2>5
+6>5
+4>6
+----
+6 6
+1 2
+3 2
+4 2
+2 5
+6 5
+4 6
+
+ */
