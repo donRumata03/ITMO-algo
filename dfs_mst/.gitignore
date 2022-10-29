@@ -1,2 +1,2 @@
-target
-*_bundled.rs
+/target
+/*/*_bundled.rs
