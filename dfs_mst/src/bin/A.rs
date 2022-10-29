@@ -1,4 +1,8 @@
-use dfs_mst::*;
+use dfs_mst::{
+	Graph,
+	DFSSpace,
+	InputReader
+};
 
 fn main() {
 	let mut input = InputReader::new();
