@@ -96,40 +96,40 @@ impl Graph {
 	}
 }
 
-struct Decomposition {
-	size: usize,
-	component_list: Vec<Vec<usize>>,
-	component_map: Vec<usize>,
+pub struct Decomposition {
+	pub elements: usize,
+	pub component_list: Vec<Vec<usize>>,
+	pub component_map: Vec<usize>,
 }
 
 impl Decomposition {
-	fn from_component_list(component_list: Vec<Vec<usize>>) -> Self {
-		let size = component_list.iter().map(|x| x.len()).sum();
+	pub fn from_component_list(component_list: Vec<Vec<usize>>) -> Self {
+		let elements = component_list.iter().map(|x| x.len()).sum();
 
-		debug_assert_eq!(size, component_list.iter().map(|x| x.len()).max(),
-			"Components should be indexed from 0 to n - 1 without gaps");
+		debug_assert_eq!(elements, component_list.iter().flatten().max().map(|x| x + 1).unwrap_or_default(),
+		                 "Components should be indexed from 0 to n - 1 without gaps");
 
-		debug_assert_eq!(size, HashSet::from_iter(
+		debug_assert_eq!(elements, HashSet::<usize>::from_iter(
 			component_list.iter()
 				.flatten()
 				.cloned()
 		).len(), "There are duplicate vertexes in component list");
 
-		let mut component_map = vec![0; size];
+		let mut component_map = vec![0; elements];
 		for (i, component) in component_list.iter().enumerate() {
 			for v in component {
 				component_map[*v] = i;
 			}
 		}
 		Decomposition {
-			size,
+			elements,
 			component_list,
 			component_map,
 		}
 	}
 
-	fn from_component_map(component_map: Vec<usize>) -> Self {
-		let size = component_map.len();
+	pub fn from_component_map(component_map: Vec<usize>) -> Self {
+		let elements = component_map.len();
 		let component_number = component_map.iter().max().map(|&n| n + 1).unwrap_or_default();
 
 		let mut component_list = vec![Vec::new(); component_number];
@@ -142,7 +142,7 @@ impl Decomposition {
 			"All indexes from 0 to n - 1 should be present in component map");
 
 		Decomposition {
-			size,
+			elements,
 			component_list,
 			component_map,
 		}
@@ -200,7 +200,7 @@ impl DFSSpace {
 	}
 
 
-	pub fn find_connected_components(&mut self, graph: &Graph) -> Vec<Vec<usize>> {
+	pub fn find_connected_components(&mut self, graph: &Graph) -> Decomposition {
 		let mut components = Vec::new();
 		for vertex in 0..graph.vertexes() {
 			if self.visit_colors[vertex] == VisitColor::White {
@@ -210,7 +210,7 @@ impl DFSSpace {
 				);
 			}
 		}
-		components
+		Decomposition::from_component_list(components)
 	}
 
 
@@ -300,7 +300,7 @@ impl DFSSpace {
 
 	/// Returns both the list of indexes of vertexes that are cutting points
 	/// and the partition of the graph into VERTEX-biconnected components
-	pub fn find_cutting_points_with_components(&mut self, graph: &Graph) -> (Vec<usize>, Vec<Vec<usize>>) {
+	pub fn find_cutting_points_with_components(&mut self, graph: &Graph) -> (Vec<usize>, Decomposition) {
 		let mut cutting_points = Vec::new();
 		let mut highest_reachable = vec![0; graph.vertexes()];
 		let mut components = Vec::new();
@@ -316,7 +316,7 @@ impl DFSSpace {
 		cutting_points.sort();
 		cutting_points.dedup();
 
-		(cutting_points, components)
+		(cutting_points, Decomposition::from_component_list(components))
 	}
 
 	fn cutting_point_dfs(&mut self, graph: &Graph,
@@ -382,15 +382,15 @@ impl DFSSpace {
 	// Compresses the components of strong connectivity and returns:
 	// — New graph of strong connectivity components
 	// — For each vertex of new graph: List of vertexes belonging to the corresponding component
-	pub fn condensation(&mut self, graph: &Graph) -> (Graph, Vec<Vec<usize>>) {
+	pub fn condensation(&mut self, graph: &Graph) -> (Graph, Decomposition) {
 		let quasi_topsort = self.topological_sort(graph).0;
-		let reversed_graph = graph.reverse();
+		let reversed_graph = graph.reversed();
 		let mut component_vertexes = vec![0; graph.vertexes()];
-
+		unimplemented!()
 	}
 }
 
-pub fn find_edge_biconnected_components(mut graph: Graph) -> Vec<Vec<usize>> {
+pub fn find_edge_biconnected_components(mut graph: Graph) -> Decomposition {
 	let mut dfs_space = DFSSpace::new(&graph);
 	let bridges = dfs_space.find_bridges(&mut graph);
 
