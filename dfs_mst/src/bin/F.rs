@@ -4,7 +4,6 @@
 
 extern crate dfs_mst;
 
-use petgraph::algo::condensation;
 use self::dfs_mst::{find_edge_biconnected_components, print_vec};
 use self::dfs_mst::{Graph, DFSSpace, InputReader, Edge, VisitColor};
 
@@ -13,19 +12,26 @@ fn main() {
 	let mut input = InputReader::new();
 	// let mut output = OutputWriter::new();
 
-	let graph = Graph::from_stdin(&mut input, false);
+	let graph = Graph::from_stdin(&mut input, true);
 	let n = graph.vertexes();
 
-	let condensation = condensation(graph);
+	let mut dfs_space = DFSSpace::new(&graph);
+	let (condensation_graph, vertex_decomposition) = dfs_space.condensation(&graph);
 
-	let mut components_of_vertex = vec![0; n];
-	for (i, component) in edge_biconnected_components.iter().enumerate() {
-		for v in component {
-			components_of_vertex[*v] = i;
-		}
-	}
-
-	// Print components of vertexes
-	println!("{}", edge_biconnected_components.len());
-	print_vec(components_of_vertex.iter().map(|&x| (x + 1)).collect());
+	// Print the number of edges in condensation
+	println!("{}", condensation_graph.edges());
 }
+
+/*
+4 4
+2 1
+3 2
+2 3
+4 3
+----------------
+2>1
+3>2
+2>3
+4>3
+----------------
+ */
