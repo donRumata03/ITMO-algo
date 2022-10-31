@@ -13,9 +13,9 @@ fn main() {
 	let mut graph = Graph::from_stdin(&mut input, true);
 
 	let mut dfs_space = crate::DFSSpace::new(&graph);
-	let mut top_sort = dfs_space.topological_sort(&graph);
+	let (top_sort, success) = dfs_space.topological_sort(&graph);
 
-	if let Some(top_sort) = top_sort {
+	if success {
 		println!("{}", top_sort
 			.iter()
 			.map(|&x| (x + 1).to_string())

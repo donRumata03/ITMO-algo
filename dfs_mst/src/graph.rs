@@ -80,6 +80,20 @@ impl Graph {
 		}
 		self.total_edges -= edges.len();
 	}
+
+	/// Vertexes have the same indexes as in the original graph
+	/// Edges have the same indexes as in the original graph
+	/// But `from` and `to` of edges are swapped
+	pub fn reversed(&self) -> Self {
+		let mut reversed = Graph::new(self.vertexes());
+		for (from, edges) in self.edges.iter().enumerate() {
+			for edge in edges {
+				reversed.add_indexed_directed_edge(edge.to, from, edge.edge_index);
+				reversed.total_edges += 1;
+			}
+		}
+		reversed
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -146,42 +160,42 @@ impl DFSSpace {
 		components
 	}
 
-	pub fn topological_sort(&mut self, graph: &Graph) -> Option<Vec<usize>> {
+
+	pub fn topological_sort(&mut self, graph: &Graph) -> (Vec<usize>, bool) {
 		let mut order = Vec::new();
+		let mut has_cycle = false;
 		for v in 0..graph.vertexes() {
 			if self.visit_colors[v] == VisitColor::White {
-				self.topsort_dfs(graph, v, &mut order);
+				has_cycle |= self.topsort_dfs(graph, v, &mut order);
 			}
 		}
 		order.reverse();
-		if order.len() == graph.vertexes() {
-			Some(order)
-		} else {
-			None
-		}
+		(order, !has_cycle)
 	}
 
-	fn topsort_dfs(&mut self, graph: &Graph, v: usize, order: &mut Vec<usize>) {
+	fn topsort_dfs(&mut self, graph: &Graph, v: usize, order: &mut Vec<usize>) -> bool {
+		let mut has_cycle = false;
 		self.visit_colors[v] = VisitColor::Gray;
 		self.t_in[v] = self.time;
 		self.time += 1;
 		for edge in &graph.edges[v] {
 			let to = edge.to;
 			if self.visit_colors[to] == VisitColor::White {
-				self.topsort_dfs(graph, to, order);
+				has_cycle |= self.topsort_dfs(graph, to, order);
 			} else if self.visit_colors[to] == VisitColor::Gray {
 				// Cycle detected
-				return;
+				has_cycle = true;
 			}
 		}
 		self.visit_colors[v] = VisitColor::Black;
 		self.t_out[v] = self.time;
 		self.time += 1;
 		order.push(v);
+		has_cycle
 	}
 
 	pub fn test_acyclic(&mut self, graph: &Graph) -> bool {
-		self.topological_sort(graph).is_some()
+		self.topological_sort(graph).1
 	}
 
 	pub fn find_bridges(&mut self, graph: &Graph) -> Vec<usize> { // List of edge indexes of bridges
@@ -310,6 +324,14 @@ impl DFSSpace {
 		}
 
 		self.visit_colors[node] = VisitColor::Black;
+	}
+
+	// Compresses the components of strong connectivity and returns:
+	// — New graph of strong connectivity components
+	// — For each vertex of new graph: List of vertexes belonging to the corresponding component
+	pub fn condensation(&mut self, graph: &Graph) -> (Graph, Vec<Vec<usize>>) {
+		let quasi_topsort = self.topological_sort(graph);
+		unimplemented!()
 	}
 }
 
