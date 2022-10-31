@@ -231,41 +231,74 @@ impl DFSSpace {
 		self.visit_colors[node] = VisitColor::Black;
 	}
 
-	pub fn find_cutting_points(&mut self, graph: &Graph) -> Vec<usize> { // List of indexes of vertexes that are cutting points
+	/// Returns both the list of indexes of vertexes that are cutting points
+	/// and the partition of the graph into VERTEX-biconnected components
+	pub fn find_cutting_points_with_components(&mut self, graph: &Graph) -> (Vec<usize>, Vec<Vec<usize>>) {
 		let mut cutting_points = Vec::new();
 		let mut highest_reachable = vec![0; graph.vertexes()];
+		let mut components = Vec::new();
+		let mut edge_stack = Vec::new();
+		let mut edge_visited = vec![false; graph.edges()];
+		// We could add to stack only edges to White and Grey vertexes (except THE vertex to parent)
+		// but here we can have parallel edges, so we need to check if the edge is visited
 		for v in 0..graph.vertexes() {
 			if self.visit_colors[v] == VisitColor::White {
-				self.cutting_point_dfs(v, graph, &mut cutting_points, &mut highest_reachable, None);
+				self.cutting_point_dfs(graph, v, None, &mut highest_reachable, &mut cutting_points, &mut components, &mut edge_stack, &mut edge_visited);
 			}
 		}
 		cutting_points.sort();
 		cutting_points.dedup();
 
-		cutting_points
+		(cutting_points, components)
 	}
 
-	fn cutting_point_dfs(&mut self, node: usize, graph: &Graph, cutting_points: &mut Vec<usize>, highest_reachable: &mut Vec<usize>, edge_to_parent: Option<Edge>) {
+	fn cutting_point_dfs(&mut self, graph: &Graph,
+	                    node: usize, edge_to_parent: Option<Edge>,
+	                    highest_reachable: &mut Vec<usize>,
+	                    cutting_points: &mut Vec<usize>,
+	                    components: &mut Vec<Vec<usize>>,
+	                    edge_stack: &mut Vec<Edge>,
+						edge_visited: &mut Vec<bool>
+	)
+	{
 		self.visit_colors[node] = VisitColor::Gray;
 		self.t_in[node] = self.time;
 		highest_reachable[node] = self.time;
 		self.time += 1;
 
-		for edge in &graph.edges[node] {
+		for &edge in &graph.edges[node] {
 			let to = edge.to;
-			// Continue if to is a parent
-			if edge_to_parent.is_some() && edge_to_parent.unwrap().to == to {
+			// Not just continue if to is a parent (cause we can have parallel edges…)
+			// But if this is THE edge from which we came from parent
+			if edge_to_parent.is_some() && edge_to_parent.unwrap().edge_index == edge.edge_index {
 				continue;
 			}
+			if !edge_visited[edge.edge_index] {
+				edge_visited[edge.edge_index] = true;
+				edge_stack.push(edge);
+			}
 			if self.visit_colors[to] == VisitColor::White {
-				self.cutting_point_dfs(to, graph, cutting_points, highest_reachable, Some(Edge { to: node, edge_index: edge.edge_index }));
+				self.cutting_point_dfs(graph, to, Some(Edge { to: node, edge_index: edge.edge_index }),
+				                       highest_reachable, cutting_points, components, edge_stack, edge_visited);
 				highest_reachable[node] = min(highest_reachable[node], highest_reachable[to]);
 				if edge_to_parent.is_some() && highest_reachable[to] >= self.t_in[node] {
 					cutting_points.push(node);
 				}
+				// Add a new component if node is cutting point or root
+				if edge_to_parent.is_none() || highest_reachable[to] >= self.t_in[node] {
+					let mut component = Vec::new();
+					loop {
+						let stack_edge = edge_stack.pop().unwrap();
+						component.push(stack_edge.edge_index);
+						if stack_edge.edge_index == edge.edge_index {
+							break;
+						}
+					}
+					components.push(component);
+				}
 				self.children[node].push(to);
 			} else if self.visit_colors[to] == VisitColor::Gray {
-				// upper edge from node itself
+				// upper edge from node itself (the parent is already ignored via continue)
 				highest_reachable[node] = min(highest_reachable[node], self.t_in[to]);
 			}
 		}
