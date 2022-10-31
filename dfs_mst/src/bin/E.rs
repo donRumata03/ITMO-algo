@@ -1,6 +1,7 @@
-//! Decomposing undirected graph into EDGE biconnected components
-//! Just find and remove cut edges (aka bridges) and then decompose
-//! resultant graph into connected components
+//! Decomposing undirected graph into VERTEX biconnected components
+//! While finding cut vertexes, also maintain stack of edges and for each
+//! tree edge going out of a cut vertex
+//! take all edges from stack until this edge (inclusive) and add them to component
 
 extern crate dfs_mst;
 
@@ -9,6 +10,7 @@ use self::dfs_mst::{Graph, DFSSpace, InputReader, Edge, VisitColor};
 
 
 fn main() {
+	unimplemented!();
 	let mut input = InputReader::new();
 	// let mut output = OutputWriter::new();
 
