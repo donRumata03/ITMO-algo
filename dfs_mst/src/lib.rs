@@ -38,6 +38,9 @@ pub use dfs::*;
 pub mod sat;
 pub use sat::*;
 
+pub mod dsu;
+pub use dsu::*;
+
 pub fn print_vec<T: Display>(vec: &Vec<T>) {
 	println!("{}", vec.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" "));
 }
