@@ -96,6 +96,59 @@ impl Graph {
 	}
 }
 
+struct Decomposition {
+	size: usize,
+	component_list: Vec<Vec<usize>>,
+	component_map: Vec<usize>,
+}
+
+impl Decomposition {
+	fn from_component_list(component_list: Vec<Vec<usize>>) -> Self {
+		let size = component_list.iter().map(|x| x.len()).sum();
+
+		debug_assert_eq!(size, component_list.iter().map(|x| x.len()).max(),
+			"Components should be indexed from 0 to n - 1 without gaps");
+
+		debug_assert_eq!(size, HashSet::from_iter(
+			component_list.iter()
+				.flatten()
+				.cloned()
+		).len(), "There are duplicate vertexes in component list");
+
+		let mut component_map = vec![0; size];
+		for (i, component) in component_list.iter().enumerate() {
+			for v in component {
+				component_map[*v] = i;
+			}
+		}
+		Decomposition {
+			size,
+			component_list,
+			component_map,
+		}
+	}
+
+	fn from_component_map(component_map: Vec<usize>) -> Self {
+		let size = component_map.len();
+		let component_number = component_map.iter().max().map(|&n| n + 1).unwrap_or_default();
+
+		let mut component_list = vec![Vec::new(); component_number];
+		for (i, component) in component_map.iter().enumerate() {
+			component_list[*component].push(i);
+		}
+
+		// Debug assert that all indexes from 0 to n - 1 are present using array
+		debug_assert!(component_list.iter().all(|x| !x.is_empty()),
+			"All indexes from 0 to n - 1 should be present in component map");
+
+		Decomposition {
+			size,
+			component_list,
+			component_map,
+		}
+	}
+}
+
 #[derive(Debug, Clone)]
 pub struct DFSSpace {
 	pub time: usize,
@@ -330,8 +383,10 @@ impl DFSSpace {
 	// — New graph of strong connectivity components
 	// — For each vertex of new graph: List of vertexes belonging to the corresponding component
 	pub fn condensation(&mut self, graph: &Graph) -> (Graph, Vec<Vec<usize>>) {
-		let quasi_topsort = self.topological_sort(graph);
-		unimplemented!()
+		let quasi_topsort = self.topological_sort(graph).0;
+		let reversed_graph = graph.reverse();
+		let mut component_vertexes = vec![0; graph.vertexes()];
+
 	}
 }
 
