@@ -30,7 +30,7 @@ fn main() {
 	println!("{}", mst
 		.iter()
 		.map(|&WeightedEdge::<i64>{ to, edge_index, weight }| weight)
-		.sum()
+		.max()
 		.unwrap_or_default()
 	);
 }
