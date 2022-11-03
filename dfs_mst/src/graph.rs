@@ -124,6 +124,22 @@ impl<T: Clone + Copy> WeightedGraph<T> {
 	}
 }
 
+impl<T: Copy + Default + PartialEq> WeightedGraph<T> {
+	pub fn from_weight_matrix(matrix: &Vec<Vec<T>>) -> Self {
+		let n = matrix.len();
+		let mut graph = Self::new(n);
+		for i in 0..n {
+			for j in 0..n {
+				if matrix[i][j] != T::default() {
+					graph.add_weighted_directed_edge(i, j, matrix[i][j]);
+				}
+			}
+		}
+		graph
+	}
+
+}
+
 impl WeightedGraph<()> {
 	pub fn add_undirected_edge(&mut self, from: usize, to: usize) {
 		self.add_weighted_undirected_edge(from, to, ());
@@ -149,6 +165,18 @@ impl WeightedGraph<()> {
 		graph
 	}
 
+	pub fn from_adjacency_matrix(matrix: &Vec<Vec<bool>>) -> Self {
+		let n = matrix.len();
+		let mut graph = Self::new(n);
+		for i in 0..n {
+			for j in 0..n {
+				if matrix[i][j] {
+					graph.add_directed_edge(i, j);
+				}
+			}
+		}
+		graph
+	}
 }
 
 impl<T: InputReadable + Clone + Copy> WeightedGraph<T> {
