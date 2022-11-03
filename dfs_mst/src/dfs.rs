@@ -123,7 +123,7 @@ impl DFSSpace {
 		for edge in &graph.edges[node] {
 			let to = edge.to;
 			if self.visit_colors[to] == VisitColor::White {
-				self.bridge_dfs(to, graph, bridges, highest_reachable, Some(Edge { to: node, edge_index: edge.edge_index }));
+				self.bridge_dfs(to, graph, bridges, highest_reachable, Some(Edge::new(node, edge.edge_index)));
 				highest_reachable[node] = min(highest_reachable[node], highest_reachable[to]);
 			} else if self.visit_colors[to] == VisitColor::Gray {
 				// upper edge from node itself (handle parent separately)
@@ -142,7 +142,7 @@ impl DFSSpace {
 		// then the edge is not a bridge
 		// Root of the dfs tree doesn't have any edges «associated» with it
 		match edge_to_parent {
-			Some(Edge { to: _parent, edge_index }) if highest_reachable[node] == self.t_in[node] => {
+			Some(Edge {to: _parent, edge_index, weight: _}) if highest_reachable[node] == self.t_in[node] => {
 				bridges.push(edge_index);
 			}, _ => {}
 		}
@@ -197,7 +197,7 @@ impl DFSSpace {
 				edge_stack.push(edge);
 			}
 			if self.visit_colors[to] == VisitColor::White {
-				self.cutting_point_dfs(graph, to, Some(Edge { to: node, edge_index: edge.edge_index }),
+				self.cutting_point_dfs(graph, to, Some(Edge::new(node, edge.edge_index)),
 				                       highest_reachable, cutting_points, components, edge_stack, edge_visited);
 				highest_reachable[node] = min(highest_reachable[node], highest_reachable[to]);
 				if edge_to_parent.is_some() && highest_reachable[to] >= self.t_in[node] {
