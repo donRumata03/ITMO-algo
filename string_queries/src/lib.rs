@@ -29,6 +29,18 @@ use std::collections::hash_map::Entry;
 pub mod scanner;
 pub use scanner::*;
 
+pub mod hash;
+pub use hash::*;
+
+pub mod string_func;
+pub use string_func::*;
+
+pub mod corasick;
+pub use corasick::*;
+
+pub mod suffmass;
+pub use suffmass::*;
+
 
 pub fn print_vec<T: Display>(vec: &Vec<T>) {
 	println!("{}", vec.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" "));
