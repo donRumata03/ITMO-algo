@@ -335,22 +335,18 @@ use string_queries::{
 	print_vec,
 	StringHasher
 };
-fn next_subrange<R>(input: &mut InputReader<R>) -> (usize, usize)
-where
-	R: std::io::Read
-{
-	let l: usize = input.next();
-	let r: usize = input.next();
-	(l, r)
-}
 fn main() {
 	let mut input = InputReader::new();
-	let string: String = input.next();
-	let hasher = StringHasher::new(&string);
-	let m: usize = input.next();
-	for _ in 0..m {
-		let (l1, r1) = next_subrange(&mut input);
-		let (l2, r2) = next_subrange(&mut input);
-		println!("{}", if hasher.substring_hash(l1 - 1, r1) == hasher.substring_hash(l2 - 1, r2) { "Yes" } else { "No" });
+	let p: String = input.next();
+	let t: String = input.next();
+	let hasher_p = StringHasher::new(&p);
+	let hasher_t = StringHasher::new(&t);
+	let mut result = Vec::new();
+	for i in 0_isize..t.len() as isize - p.len() as isize + 1 {
+		if hasher_p.substring_hash(0, p.len()) == hasher_t.substring_hash(i as usize, i as usize + p.len()) {
+			result.push(i + 1);
+		}
 	}
+	println!("{}", result.len());
+	print_vec(&result);
 }

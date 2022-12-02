@@ -1,4 +1,4 @@
-const HASH_BASE: u64 = 137;
+const HASH_BASE: u64 = 163;
 
 
 pub struct StringHasher {

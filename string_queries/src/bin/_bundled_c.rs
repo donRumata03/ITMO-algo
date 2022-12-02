@@ -230,7 +230,7 @@ impl_readable_from!{ f64, [f32] }
 }
 pub use scanner::*;
 pub mod hash {
-const HASH_BASE: u64 = 137;
+const HASH_BASE: u64 = 163;
 pub struct StringHasher {
 	prefix_hashes: Vec<u64>, // prefix_hashes[i] = hash(s[0..i)), i.e. hash of the prefix of length i. E.g. prefix_hashes[0] = hash("")
 	powers: Vec<u64>, // powers[i] = HASH_BASE^i
