@@ -42,7 +42,7 @@ pub mod suffmass;
 pub use suffmass::*;
 
 
-pub fn print_vec<T: Display>(vec: &Vec<T>) {
+pub fn print_vec<T: Display>(vec: &[T]) {
 	println!("{}", vec.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" "));
 }
 
