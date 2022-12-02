@@ -134,12 +134,17 @@ impl<R: Read> InputReader<R> {
 		c as u64 - '0' as u64
 	}
 
-	fn consume_until<F: Fn(char) -> bool>(&mut self, test: F) {
+	pub fn consume_until<F: Fn(char) -> bool>(&mut self, test: F) {
 		loop {
 			assert!(self.has_more(), EOF!());
 			if test(self.peek()) { return; }
 			self.consume();
 		}
+	}
+
+	pub fn consume_until_inclusive<F: Fn(char) -> bool>(&mut self, test: F) {
+		self.consume_until(test);
+		self.consume();
 	}
 
 	fn consume_until_sign(&mut self) -> i64 {

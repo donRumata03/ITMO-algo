@@ -20,23 +20,15 @@ fn main() {
 	let n = graph.vertexes();
 
 	let mut dfs_space = DFSSpace::new(&graph);
-	let (cutting_points, vertex_biconnected_components) =
+	let (_cutting_points, vertex_biconnected_components) =
 		dfs_space.find_cutting_points_with_components(&graph);
 
-	let mut component_of_edge = vec![0; graph.edges()];
-	for (i, component) in vertex_biconnected_components.iter().enumerate() {
-		for e in component {
-			component_of_edge[*e] = i + 1;
-		}
-	}
-
-	// dbg!(&cutting_points);
-	// dbg!(&vertex_biconnected_components);
-	// dbg!(&dfs_space);
-
 	// Print components of edges
-	println!("{}", vertex_biconnected_components.len());
-	print_vec(component_of_edge.clone());
+	println!("{}", vertex_biconnected_components.component_list.len());
+	print_vec(&vertex_biconnected_components.component_map.iter()
+		.map(|&index| index + 1)
+		.collect()
+	);
 }
 
 /*
