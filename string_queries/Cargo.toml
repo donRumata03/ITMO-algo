@@ -1,0 +1,10 @@
+[package]
+name = "string_queries"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+
+[build-dependencies]
+rustsourcebundler = { git = "https://github.com/lpenz/rust-sourcebundler" }
